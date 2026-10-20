@@ -358,5 +358,8 @@
   "analytics.sinceStart": "पोस्ट करने के बाद से",
   "empty.notifText": "जब लोग आपकी स्टोरी या पोस्ट पर प्रतिक्रिया देंगे, तो यहाँ दिखेगा।",
   "empty.schedText": "पोस्ट पहले से प्लान करें, वे अपने-आप प्रकाशित होंगी।",
-  "empty.archiveText": "समाप्त स्टोरीज़ यहाँ सहेजी जाती हैं।"
+  "empty.archiveText": "समाप्त स्टोरीज़ यहाँ सहेजी जाती हैं।",
+  "notif.like": "{username} ने आपकी पोस्ट पसंद की",
+  "notif.comment": "{username} ने टिप्पणी की: {text}",
+  "notif.follow": "{username} ने आपको फ़ॉलो करना शुरू किया"
 }

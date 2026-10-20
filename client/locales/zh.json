@@ -358,5 +358,8 @@
   "analytics.sinceStart": "自发布以来",
   "empty.notifText": "有人回应你的快拍或帖子时会显示在这里。",
   "empty.schedText": "提前规划帖子，它们会自动发布。",
-  "empty.archiveText": "过期的快拍会保存在这里。"
+  "empty.archiveText": "过期的快拍会保存在这里。",
+  "notif.like": "{username} 赞了你的帖子",
+  "notif.comment": "{username} 评论：{text}",
+  "notif.follow": "{username} 关注了你"
 }

@@ -5,6 +5,13 @@ import { secretGuard } from "./cron.routes.js";
 const r = express.Router();
 r.all("/", secretGuard("SEED_SECRET"), async (req, res) => {
   const t = Date.now();
+  if (req.query.size === "large") {
+    const { STEPS } = await import("../seedLarge.js");
+    const step = String(req.query.step || "users");
+    if (!STEPS[step]) return res.status(400).json({ success: false, message: "step must be one of " + Object.keys(STEPS).join(",") });
+    try { return res.json({ success: true, step, result: await STEPS[step](), ms: Date.now() - t, next: { users: "posts", posts: "social", social: "extras" }[step] || null }); }
+    catch (e) { return res.status(500).json({ success: false, step, message: e.message }); }
+  }
   await mongoose.connection.syncIndexes().catch((e) => console.warn("index sync:", e.message));
   const { seed } = await import("../seed.js");
   const prev = process.env.SEED_DEMO;

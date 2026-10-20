@@ -358,5 +358,8 @@
   "analytics.sinceStart": "desde la publicación",
   "empty.notifText": "Cuando reaccionen a tus historias o publicaciones, lo verás aquí.",
   "empty.schedText": "Planifica publicaciones y se publicarán automáticamente.",
-  "empty.archiveText": "Las historias caducadas se guardan aquí."
+  "empty.archiveText": "Las historias caducadas se guardan aquí.",
+  "notif.like": "A {username} le gustó tu publicación",
+  "notif.comment": "{username} comentó: {text}",
+  "notif.follow": "{username} empezó a seguirte"
 }

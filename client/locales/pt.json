@@ -358,5 +358,8 @@
   "analytics.sinceStart": "desde a publicação",
   "empty.notifText": "Quando reagirem aos seus stories ou posts, você verá aqui.",
   "empty.schedText": "Planeje posts e eles serão publicados automaticamente.",
-  "empty.archiveText": "Stories expirados ficam salvos aqui."
+  "empty.archiveText": "Stories expirados ficam salvos aqui.",
+  "notif.like": "{username} curtiu sua publicação",
+  "notif.comment": "{username} comentou: {text}",
+  "notif.follow": "{username} começou a seguir você"
 }

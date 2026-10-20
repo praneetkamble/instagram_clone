@@ -358,5 +358,8 @@
   "analytics.sinceStart": "since posted",
   "empty.notifText": "When people react to your stories or posts, you'll see it here.",
   "empty.schedText": "Plan posts ahead and they'll publish automatically.",
-  "empty.archiveText": "Expired stories are saved here so you can revisit them."
+  "empty.archiveText": "Expired stories are saved here so you can revisit them.",
+  "notif.like": "{username} liked your post",
+  "notif.comment": "{username} commented: {text}",
+  "notif.follow": "{username} started following you"
 }
