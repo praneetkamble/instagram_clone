@@ -83,3 +83,17 @@ BASE=http://localhost:5000 LOG=/path/to/server.log node scripts/e2e.mjs   # 84 e
 
 ## Environment variables
 See `server/.env.example` and `client/.env.example`.
+
+## Deployment
+
+### API → Render
+1. Push the repo, then in Render choose **New → Blueprint** and select it (uses `render.yaml`), or create a *Web Service* with root `server`, build `npm ci`, start `npm start`.
+2. Set `MONGODB_URI` (MongoDB Atlas – the in-memory DB is dev-only), `CLIENT_URL` (your Vercel URL), `PUBLIC_URL` (the Render URL), `ADMIN_PASSWORD`, and the Razorpay / SMTP / SMS keys.
+3. `PORT` is supplied by Render; the server binds to it. `trust proxy` is on so login history records the real client IP from `X-Forwarded-For`. CORS + Socket.io allow the origins in `CLIENT_URL`.
+4. `TZ=Asia/Kolkata` makes the mobile-login window (10:00–13:00 server time) IST. The payment window is always computed in IST.
+5. Note: Render's free disk is ephemeral – uploaded media in `server/uploads` is wiped on redeploy. Attach a Render Disk mounted at `UPLOAD_DIR`, or move uploads to object storage, for permanent media.
+
+### Web → Vercel
+1. Import the repo, set **Root Directory = `client`** (framework auto-detected: Next.js).
+2. Env var: `NEXT_PUBLIC_BACKEND_URL=https://<your-render-service>.onrender.com` (also `BACKEND_URL`, same value).
+3. Deploy, then put the Vercel URL into the API's `CLIENT_URL`.

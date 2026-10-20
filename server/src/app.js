@@ -14,7 +14,7 @@ import uploadRoutes, { UPLOAD_DIR } from "./routes/upload.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
 dotenv.config();
 const app = express();
-app.set("trust proxy", true);
+app.set("trust proxy", Number(process.env.TRUST_PROXY ?? 1)); // Render/Vercel: one proxy hop
 const origins = (process.env.CLIENT_URL || "http://localhost:3000,https://instagram-clone-pink.vercel.app").split(",").map((s) => s.trim());
 app.use(cors({ origin: origins, credentials: true }));
 app.use(express.json({ limit: "2mb", verify: (req, _res, buf) => { req.rawBody = buf.toString(); } }));

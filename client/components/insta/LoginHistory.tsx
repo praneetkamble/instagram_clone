@@ -22,10 +22,10 @@ export default function LoginHistory({ compact = false }: { compact?: boolean })
     <div className="space-y-4" data-testid="login-history">
       {!compact && (
         <Card>
-          <div className="flex justify-between items-center mb-2"><h3 className="font-semibold text-ig-text">{t("settings.sessions")}</h3><button className={btn2Cls} onClick={() => revoke("all")}>{t("settings.revokeAll")}</button></div>
+          <div className="flex flex-wrap gap-2 justify-between items-center mb-2"><h3 className="font-semibold text-ig-text">{t("settings.sessions")}</h3><button className={btn2Cls} onClick={() => revoke("all")}>{t("settings.revokeAll")}</button></div>
           <ul className="divide-y divide-ig-border">
             {sessions.map((s) => (
-              <li key={s._id} className="py-2 flex items-center text-sm text-ig-text gap-2">
+              <li key={s._id} className="py-2 flex flex-wrap items-center text-sm text-ig-text gap-x-2 gap-y-1">
                 <span>{s.browser} · {s.os} · {s.deviceType} · {s.ip}</span>
                 <span className="text-xs text-ig-muted">{fmtDate(s.lastSeenAt)}</span>
                 {s.current ? <span className="ml-auto text-xs text-green-600">{t("settings.thisDevice")}</span> : <button className="ml-auto text-xs text-[#ed4956]" onClick={() => revoke(s._id)}>{t("settings.revoke")}</button>}
@@ -37,7 +37,7 @@ export default function LoginHistory({ compact = false }: { compact?: boolean })
       <Card>
         <h3 className="font-semibold text-ig-text mb-2">{t("settings.loginHistory")}</h3>
         <div className="overflow-x-auto">
-          <table className="w-full text-xs text-ig-text">
+          <table className="w-full min-w-[640px] text-xs text-ig-text">
             <thead className="text-ig-muted text-left"><tr><th className="py-1 pr-2">{t("common.date")}</th><th className="pr-2">{t("settings.browser")}</th><th className="pr-2">{t("settings.os")}</th><th className="pr-2">{t("settings.device")}</th><th className="pr-2">{t("settings.ip")}</th><th className="pr-2">{t("common.status")}</th>{!compact && <th>{t("settings.reason")}</th>}</tr></thead>
             <tbody>
               {items.map((i) => (

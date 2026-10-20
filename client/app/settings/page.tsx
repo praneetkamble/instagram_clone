@@ -61,7 +61,7 @@ function LanguageTab() {
       <p className="text-xs text-ig-muted">{t("settings.languageNote")}</p>
       {otp ? <OtpForm destination={otp.destination} minutes={otp.ttlMinutes} onVerify={verify} onResend={request} onCancel={() => setOtp(null)} /> : (
         <>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {LANGUAGES.map((l) => (
               <label key={l.code} className={`border rounded p-2 text-sm cursor-pointer text-ig-text ${target === l.code ? "border-[#0095f6]" : "border-ig-border"}`}>
                 <input type="radio" name="lang" value={l.code} checked={target === l.code} onChange={() => setTarget(l.code)} className="mr-2" />
@@ -114,8 +114,8 @@ function SettingsInner() {
   const labels: Record<string, string> = { profile: t("settings.editProfile"), language: t("settings.language"), security: t("settings.security"), subscription: t("nav.subscription"), closeFriends: t("story.closeFriends") };
   return (
     <PageShell title={t("settings.title")} wide>
-      <div className="flex gap-2 mb-4 flex-wrap">
-        {TABS.map((k) => <button key={k} onClick={() => router.push(`/settings?tab=${k}`)} className={`px-3 py-1.5 rounded-full text-sm ${tab === k ? "bg-ig-text text-ig-text-inverse" : "bg-ig-hover text-ig-text"}`}>{labels[k]}</button>)}
+      <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap">
+        {TABS.map((k) => <button key={k} onClick={() => router.push(`/settings?tab=${k}`)} className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-sm ${tab === k ? "bg-ig-text text-ig-text-inverse" : "bg-ig-hover text-ig-text"}`}>{labels[k]}</button>)}
       </div>
       {tab === "profile" && <ProfileTab />}
       {tab === "language" && <LanguageTab />}

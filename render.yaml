@@ -1,0 +1,55 @@
+# Render Blueprint – deploys the Express API (server/). The Next.js client goes on Vercel.
+services:
+  - type: web
+    name: instai-api
+    runtime: node
+    rootDir: server
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start            # node src/server.js
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TZ
+        value: Asia/Kolkata            # "server time" for the 10:00–13:00 mobile-login window
+      - key: SEED_ON_START             # creates/promotes the admin account on boot
+        value: "true"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: MONGODB_URI               # MongoDB Atlas connection string
+        sync: false
+      - key: CLIENT_URL                # e.g. https://your-app.vercel.app (comma-separate several)
+        sync: false
+      - key: PUBLIC_URL                # e.g. https://instai-api.onrender.com
+        sync: false
+      - key: ADMIN_EMAIL
+        value: admin@instai.dev
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_FROM
+        sync: false
+      - key: FAST2SMS_API_KEY
+        sync: false
+      - key: GROQ_API
+        sync: false

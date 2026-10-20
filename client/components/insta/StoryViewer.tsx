@@ -108,10 +108,10 @@ export default function StoryViewer({ groups, initialGroupIndex = 0, onClose, on
             </div>
           ))}
         </div>
-        <div className="absolute top-6 left-3 right-3 flex items-center gap-2 z-10 text-white">
+        <div className="absolute top-6 left-3 right-12 md:right-3 flex items-center gap-2 z-10 text-white min-w-0">
           <img src={group.user.profilePicture || "/globe.svg"} className="w-8 h-8 rounded-full object-cover" alt="" />
-          <span className="text-sm font-semibold">{group.user.username}</span>
-          <span className="text-xs opacity-70">{t("story.expiresIn", { hours: hoursLeft })}</span>
+          <span className="text-sm font-semibold truncate">{group.user.username}</span>
+          <span className="text-xs opacity-70 whitespace-nowrap">{t("story.expiresIn", { hours: hoursLeft })}</span>
           {story.privacy !== "public" && <span className={`text-[10px] px-1.5 py-0.5 rounded ${story.privacy === "close_friends" ? "bg-green-600" : "bg-white/30"}`}>{story.privacy === "close_friends" ? t("story.closeFriends") : t("story.followers")}</span>}
           <button className="ml-auto" onClick={() => setPaused(!paused)}>{paused ? <Play size={18} /> : <Pause size={18} />}</button>
         </div>
@@ -131,7 +131,7 @@ export default function StoryViewer({ groups, initialGroupIndex = 0, onClose, on
             </div>
           ) : readOnly ? null : (
             <>
-              <div className="flex justify-center gap-3 mb-2">{EMOJIS.map((e) => <button key={e} onClick={() => react(e)} className="text-2xl hover:scale-125 transition-transform">{e}</button>)}</div>
+              <div className="flex justify-center gap-2 sm:gap-3 mb-2">{EMOJIS.map((e) => <button key={e} onClick={() => react(e)} className="text-2xl hover:scale-125 transition-transform">{e}</button>)}</div>
               <form onSubmit={sendReply} className="flex items-center gap-2">
                 <input value={reply} onFocus={() => setPaused(true)} onBlur={() => !reply && setPaused(false)} onChange={(e) => setReply(e.target.value)}
                   placeholder={t("story.reply", { username: group.user.username })} className="flex-1 bg-transparent border border-white/60 rounded-full px-4 py-2 text-sm text-white placeholder:text-white/70 focus:outline-none" />

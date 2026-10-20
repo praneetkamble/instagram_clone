@@ -95,10 +95,10 @@ export default function SubscriptionPanel() {
       {info.current.subscription?.status === "active" && <button className="text-sm text-[#ed4956]" onClick={cancel}>{t("sub.cancel")}</button>}
       <Card>
         <h3 className="font-semibold text-ig-text mb-2">{t("sub.history")}</h3>
-        <table className="w-full text-xs text-ig-text">
+        <div className="overflow-x-auto"><table className="w-full min-w-[560px] text-xs text-ig-text">
           <thead className="text-left text-ig-muted"><tr><th>{t("common.date")}</th><th>{t("sub.plan")}</th><th>{t("sub.amount")}</th><th>{t("common.status")}</th><th>{t("sub.invoice")}</th><th>{t("common.to")}</th></tr></thead>
-          <tbody>{history.map((h) => <tr key={h._id} className="border-t border-ig-border"><td className="py-1">{fmtDate(h.createdAt)}</td><td>{planName(h.plan)}</td><td>₹{h.amount}</td><td>{h.status}{h.failureReason ? ` (${h.failureReason})` : ""}</td><td>{h.invoiceNumber || "—"}</td><td>{h.endsAt ? fmtDate(h.endsAt, { dateStyle: "medium" }) : "—"}</td></tr>)}</tbody>
-        </table>
+          <tbody>{history.map((h) => <tr key={h._id} className="border-t border-ig-border"><td className="py-1">{fmtDate(h.createdAt)}</td><td>{planName(h.plan)}</td><td>₹{h.amount}</td><td>{t(`val.${h.status}`)}{h.failureReason ? ` (${h.failureReason})` : ""}</td><td>{h.invoiceNumber || "—"}</td><td>{h.endsAt ? fmtDate(h.endsAt, { dateStyle: "medium" }) : "—"}</td></tr>)}</tbody>
+        </table></div>
       </Card>
       {mockOrder && (
         <div className="fixed inset-0 z-[100] bg-black/60 flex items-center justify-center p-4">

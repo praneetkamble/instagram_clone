@@ -40,7 +40,7 @@ export default function StoryAnalyticsPage() {
           <p className="text-xs text-green-600">● {t("analytics.live")}</p>
         </div>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
         {stat(t("analytics.totalViews"), totals.viewsCount, "total-views")}
         {stat(t("analytics.uniqueViewers"), totals.uniqueViewers, "unique-viewers")}
         {stat(t("analytics.reactions"), totals.reactionsCount, "reactions")}
@@ -61,7 +61,7 @@ export default function StoryAnalyticsPage() {
           </div>
         )}
       </Card>
-      <div className="grid md:grid-cols-3 gap-4">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card>
           <h2 className="font-semibold text-ig-text mb-2">{t("analytics.viewers")} ({totals.uniqueViewers})</h2>
           <ul className="space-y-2 max-h-96 overflow-auto">

@@ -30,16 +30,16 @@ export default function ScheduledPage() {
   return (
     <PageShell title={t("sched.title")}>
       <p className="text-sm text-ig-muted mb-3">{t("sched.limitNote", { max })}</p>
-      <div className="flex gap-2 mb-4">
+      <div className="flex flex-wrap gap-2 mb-4">
         {["", "scheduled", "published", "cancelled", "failed"].map((s) => <button key={s} onClick={() => setStatus(s)} className={`px-3 py-1 rounded-full text-xs ${status === s ? "bg-[#0095f6] text-white" : "bg-ig-hover text-ig-text"}`}>{s ? t(`sched.status.${s}`) : t("common.all")}</button>)}
       </div>
       <div className="space-y-3">
         {items.map((p) => (
-          <Card key={p._id} className="flex gap-4">
-            <img src={p.media[0]?.url} className="w-24 h-24 object-cover rounded" alt="" />
+          <Card key={p._id} className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <img src={p.media[0]?.url} className="w-full sm:w-24 h-40 sm:h-24 object-cover rounded" alt="" />
             <div className="flex-1 text-sm text-ig-text space-y-1">
-              <div className="flex items-center gap-2"><span className="text-xs px-2 py-0.5 rounded bg-ig-hover">{t(`sched.status.${p.status}`)}</span><span className="text-xs text-ig-muted">{t("sched.publishAt", { date: fmtDate(p.scheduledAt) })}</span></div>
-              <p>{p.caption}</p>
+              <div className="flex flex-wrap items-center gap-2"><span className="text-xs px-2 py-0.5 rounded bg-ig-hover">{t(`sched.status.${p.status}`)}</span><span className="text-xs text-ig-muted">{t("sched.publishAt", { date: fmtDate(p.scheduledAt) })}</span></div>
+              <p className="break-words">{p.caption}</p>
               <p className="text-xs text-[#0095f6]">{p.hashtags?.map((h: string) => `#${h}`).join(" ")}</p>
               {p.taggedUsers?.length > 0 && <p className="text-xs text-ig-muted">@{p.taggedUsers.map((u: any) => u.username).join(", @")}</p>}
               {p.location && <p className="text-xs text-ig-muted">📍 {p.location}</p>}
@@ -57,7 +57,7 @@ export default function ScheduledPage() {
       </div>
       {edit && (
         <div className="fixed inset-0 z-[100] bg-black/60 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md space-y-2">
+          <Card className="w-full max-w-md space-y-2 max-h-[90vh] overflow-auto">
             <h3 className="font-semibold text-ig-text">{t("sched.reschedule")}</h3>
             <textarea className={inputCls} rows={3} value={edit.caption} onChange={(e) => setEdit({ ...edit, caption: e.target.value })} placeholder={t("create.caption")} />
             <input className={inputCls} value={edit.hashtagsText} onChange={(e) => setEdit({ ...edit, hashtagsText: e.target.value })} placeholder={t("create.hashtags")} />

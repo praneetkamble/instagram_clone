@@ -12,6 +12,9 @@ type ResCfg = {
   filters: { key: string; label: string; options: string[] }[];
   edit: Field[]; create?: Field[]; sorts: string[]; readOnly?: boolean; dateLabel?: string;
 };
+// translate raw enum values (status, plan, …) – falls back to the raw value
+export const tv = (t: (k: string) => string, v: any) => { if (v == null || v === "") return ""; const k = `val.${v}`; const r = t(k); return r === k ? String(v) : r; };
+const ENUM_COLS = new Set(["role", "status", "plan", "visibility", "privacy", "targetType", "state", "deviceType", "language"]);
 const get = (o: any, p: string) => p.split(".").reduce((a, k) => (a == null ? a : a[k]), o);
 const pic = (r: any) => r?.media?.[0]?.url ? <img src={r.media[0].url} className="w-10 h-10 object-cover rounded" alt="" /> : null;
 
@@ -93,7 +96,8 @@ function Overview() {
 }
 
 function FieldInput({ f, value, onChange }: { f: Field; value: any; onChange: (v: any) => void }) {
-  if (f.type === "select") return <select className={inputCls} value={value ?? ""} onChange={(e) => onChange(e.target.value)}><option value="">—</option>{f.options!.map((o) => <option key={o}>{o}</option>)}</select>;
+  const { t } = useI18n();
+  if (f.type === "select") return <select className={inputCls} value={value ?? ""} onChange={(e) => onChange(e.target.value)}><option value="">—</option>{f.options!.map((o) => <option key={o} value={o}>{tv(t, o)}</option>)}</select>;
   if (f.type === "bool") return <input type="checkbox" checked={!!value} onChange={(e) => onChange(e.target.checked)} />;
   if (f.type === "date") return <input type="datetime-local" className={inputCls} value={value ? new Date(new Date(value).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""} onChange={(e) => onChange(e.target.value ? new Date(e.target.value).toISOString() : null)} />;
   return <input className={inputCls} value={value ?? ""} onChange={(e) => onChange(e.target.value)} />;
@@ -127,11 +131,11 @@ function ResourceTable({ name }: { name: string }) {
   return (
     <div className="space-y-3">
       <Card className="flex flex-wrap gap-2 items-end">
-        <input className={inputCls + " max-w-[220px]"} placeholder={t("admin.keyword")} value={q.q} onChange={(e) => set("q", e.target.value)} data-testid="admin-search" />
+        <input className={inputCls + " sm:max-w-[220px]"} placeholder={t("admin.keyword")} value={q.q} onChange={(e) => set("q", e.target.value)} data-testid="admin-search" />
         {cfg.filters.map((f) => (
           <label key={f.key} className="text-xs text-ig-muted">{t(f.label)}
             <select className={inputCls + " min-w-[110px]"} value={filters[f.key] || ""} onChange={(e) => { setFilters({ ...filters, [f.key]: e.target.value }); set("page", 1); }}>
-              <option value="">{t("common.all")}</option>{f.options.map((o) => <option key={o} value={o}>{o}</option>)}
+              <option value="">{t("common.all")}</option>{f.options.map((o) => <option key={o} value={o}>{tv(t, o)}</option>)}
             </select>
           </label>
         ))}
@@ -145,19 +149,19 @@ function ResourceTable({ name }: { name: string }) {
       </Card>
       <p className="text-xs text-ig-muted">{t("admin.total", { total: data.total })}</p>
       <div className="overflow-x-auto bg-ig-surface border border-ig-border rounded-lg">
-        <table className="w-full text-xs text-ig-text" data-testid="admin-table">
+        <table className="w-full min-w-[720px] text-xs text-ig-text" data-testid="admin-table">
           <thead className="text-left text-ig-muted"><tr>{cfg.columns.map((c) => <th key={c.key} className="p-2 whitespace-nowrap">{c.key}</th>)}{!cfg.readOnly && <th className="p-2">{t("common.actions")}</th>}</tr></thead>
           <tbody>
             {data.items.map((r: any) => (
               <tr key={r._id} className="border-t border-ig-border align-top">
-                {cfg.columns.map((c) => <td key={c.key} className="p-2 max-w-[260px] break-words">{c.render ? c.render(r, fmt) : String(get(r, c.key) ?? "")}</td>)}
+                {cfg.columns.map((c) => <td key={c.key} className="p-2 max-w-[260px] break-words">{(() => { const v = c.render ? c.render(r, fmt) : get(r, c.key); return ENUM_COLS.has(c.key) && (typeof v === "string") ? tv(t, v) : typeof v === "object" && v !== null && !("$$typeof" in v) ? String(v) : (v ?? ""); })()}</td>)}
                 {!cfg.readOnly && <td className="p-2 whitespace-nowrap"><button className="text-[#0095f6] mr-2" onClick={() => setEdit({ ...r })}>{t("common.edit")}</button><button className="text-[#ed4956]" onClick={() => del(r._id)}>{t("common.delete")}</button></td>}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <div className="flex items-center gap-3 text-sm text-ig-text">
+      <div className="flex flex-wrap items-center gap-3 text-sm text-ig-text">
         <button className={btn2Cls} disabled={q.page <= 1} onClick={() => set("page", q.page - 1)}>{t("common.prev")}</button>
         <span>{t("common.page", { page: q.page, pages: Math.max(1, data.pages) })}</span>
         <button className={btn2Cls} disabled={q.page >= data.pages} onClick={() => set("page", q.page + 1)}>{t("common.next")}</button>
@@ -187,8 +191,8 @@ export default function AdminPage() {
   if (me?.role !== "admin") return <PageShell title={t("admin.title")}><p className="text-[#ed4956]">{t("admin.notAdmin")}</p></PageShell>;
   return (
     <PageShell title={t("admin.title")} wide>
-      <div className="flex gap-2 flex-wrap mb-4">
-        {["overview", ...Object.keys(CFG)].map((k) => <button key={k} onClick={() => setTab(k)} className={`px-3 py-1.5 rounded-full text-sm ${tab === k ? "bg-[#0095f6] text-white" : "bg-ig-hover text-ig-text"}`}>{k === "overview" ? t("admin.overview") : t(CFG[k].label)}</button>)}
+      <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap">
+        {["overview", ...Object.keys(CFG)].map((k) => <button key={k} onClick={() => setTab(k)} className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-sm ${tab === k ? "bg-[#0095f6] text-white" : "bg-ig-hover text-ig-text"}`}>{k === "overview" ? t("admin.overview") : t(CFG[k].label)}</button>)}
       </div>
       {tab === "overview" ? <Overview /> : <ResourceTable key={tab} name={tab} />}
     </PageShell>
