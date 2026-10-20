@@ -29,7 +29,7 @@ export default function ExploreGrid({ posts }: { posts: any[] | null }) {
           return (
             <button key={p._id} onClick={() => setOpen(p)} className={`group relative overflow-hidden rounded-md bg-ig-hover ${tall ? "row-span-2" : "aspect-square"}`}>
               {m?.type === "video"
-                ? <video src={m.url} muted playsInline preload="metadata" className="absolute inset-0 w-full h-full object-cover" />
+                ? <video src={m.url} poster={`https://picsum.photos/seed/poster-${p._id}/720/1280`} muted playsInline preload="metadata" className="absolute inset-0 w-full h-full object-cover" />
                 : <img src={m?.url} alt={p.caption || "post"} loading="lazy" className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />}
               <span className="absolute top-2 right-2 text-white drop-shadow">{m?.type === "video" ? <Film size={16} /> : p.media?.length > 1 ? <Layers size={16} /> : null}</span>
               <span className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-5 text-white font-semibold text-sm">

@@ -31,7 +31,7 @@ function Reel({ p, muted, setMuted }: any) {
     <section ref={ref} className="snap-start snap-always h-full flex items-center justify-center py-0 md:py-3">
       <div className="relative h-full w-full md:w-auto md:aspect-[9/16] md:rounded-2xl overflow-hidden bg-black shadow-2xl" onDoubleClick={() => { toggle(true); setBurst(true); setTimeout(() => setBurst(false), 700); }}>
         {m?.type === "video"
-          ? <video ref={vid} src={m.url} loop muted={muted} playsInline className="absolute inset-0 w-full h-full object-cover" onClick={() => setMuted(!muted)} />
+          ? <video ref={vid} src={m.url} poster={`https://picsum.photos/seed/poster-${p._id}/720/1280`} preload="metadata" loop muted={muted} playsInline className="absolute inset-0 w-full h-full object-cover" onClick={() => setMuted(!muted)} />
           : <img src={m?.url} alt={p.caption} className="absolute inset-0 w-full h-full object-cover ig-kenburns" />}
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/20 pointer-events-none" />
         {burst && <Heart size={96} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 fill-white text-white ig-like-pop drop-shadow-xl" />}

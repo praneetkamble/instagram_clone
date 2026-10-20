@@ -38,8 +38,10 @@ const NICHES = [
 const PLACES = ["Mumbai","Pune","Bengaluru","Delhi","Jaipur","Goa","Kochi","Hyderabad","Chennai","Kolkata","Udaipur","Rishikesh","Leh","Munnar","Shillong","Paris","Lisbon","Tokyo","Bali","New York","London","Barcelona","Dubai","Singapore","Cape Town",""];
 const LINES = ["Golden hour hits different here 🌅","Weekend well spent","Can't get over this view","Little things, big joy ✨","Monday mood","Throwback to this moment","New week, new goals","Sunday slow mornings ☕","This is your sign to go","Grateful for days like this","Caught in the moment","POV: you finally took the trip","Trying something new today","Who else loves this?","Saved the best for last","Mood board for the month","Rainy days and chai 🌧️","Not all who wander are lost","Small steps every day","Home is a feeling"];
 const COMMENTS = ["This is stunning 😍","Need to go here!","Wow 🔥","Saving this","Goals 🙌","So beautiful","Where is this?","Love this vibe ✨","Amazing shot 📸","Take me with you!","Incredible 👏","This made my day","Obsessed!!","Recipe please 🙏","Can't stop looking at this","Absolutely love it ❤️","Wait this is so good","Next level 🔥🔥","Teach me your ways","Brilliant colours"];
-const VIDEOS = ["BigBuckBunny","ElephantsDream","ForBiggerBlazes","ForBiggerEscapes","ForBiggerFun","ForBiggerJoyrides","ForBiggerMeltdowns","Sintel","SubaruOutbackOnStreetAndDirt","TearsOfSteel","VolkswagenGTIReview","WeAreGoingOnBullrun","WhatCarCanYouGetForAGrand"]
-  .map((v) => `https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/${v}.mp4`);
+const VIDEOS = [
+  ...["bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB","jellyfish/mp4/h264/720/Jellyfish_720_10s_1MB","sintel/mp4/h264/720/Sintel_720_10s_1MB","bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB","jellyfish/mp4/h264/360/Jellyfish_360_10s_1MB","sintel/mp4/h264/360/Sintel_360_10s_1MB"].map((v) => `https://test-videos.co.uk/vids/${v}.mp4`),
+  "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+];
 const LANGS = ["en","en","en","hi","hi","fr","es","pt","zh"];
 const PRICE = { bronze: 100, silver: 300, gold: 1000 };
 const UAS = [
@@ -238,4 +240,15 @@ async function stepMessages() {
   return { conversations: convs.length, messages: saved.length };
 }
 
-export const STEPS = { users: stepUsers, posts: stepPosts, social: stepSocial, extras: stepExtras, messages: stepMessages };
+// Re-point any dead sample-video URLs (old Google bucket now 403s) to working public MP4s.
+async function stepFixVideos() {
+  const dead = { $regex: "gtv-videos-bucket" }; let n = 0, i = 0;
+  for (const M of [Post, Story]) {
+    const docs = await M.find({ "media.url": dead }).select("_id media").lean();
+    await M.bulkWrite(docs.map((d) => ({ updateOne: { filter: { _id: d._id }, update: { $set: { media: d.media.map((m) => (/gtv-videos-bucket/.test(m.url) ? { ...m, url: VIDEOS[i++ % VIDEOS.length] } : m)) } } } })));
+    n += docs.length;
+  }
+  return { fixed: n };
+}
+
+export const STEPS = { users: stepUsers, posts: stepPosts, social: stepSocial, extras: stepExtras, messages: stepMessages, fixvideos: stepFixVideos };
