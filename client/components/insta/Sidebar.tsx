@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme-context";
-import { currentUser, mockConversations } from "@/lib/mock-data";
+
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
@@ -29,9 +29,9 @@ import { useCreateModal } from "@/lib/createmodelcontext";
 import axiosInstance from "@/lib/axios";
 import { toast } from "../ui/toast";
 import useAuthStore from "@/store/authStore";
-import { useUnreadNotifications } from "@/lib/realtime";
+import { useUnreadNotifications, useUnreadMessages } from "@/lib/realtime";
 const Sidebar = () => {
-  const totalUnread = mockConversations.reduce((s, c) => s + c.unread, 0);
+  const totalUnread = useUnreadMessages();
   const { theme, toggle } = useTheme();
   const pathname = usePathname();
   const router = useRouter();
@@ -150,7 +150,7 @@ const Sidebar = () => {
         >
           <div className="w-6 h-6 rounded-full overflow-hidden shrink-0">
             <img
-              src={me?.profilePicture || currentUser.profilePic}
+              src={me?.profilePicture || "https://i.pravatar.cc/150?u=" + (me?._id || "me")}
               alt={me?.username || ""}
               className="w-full h-full object-cover"
             />

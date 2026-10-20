@@ -1,14 +1,14 @@
 "use client";
 
-import { mockConversations } from "@/lib/mock-data";
+
 import { useTheme } from "@/lib/theme-context";
 import { Heart, Moon, Settings, Sun } from "lucide-react";
 import Link from "next/link";
-import { useUnreadNotifications } from "@/lib/realtime";
+import { useUnreadNotifications, useUnreadMessages } from "@/lib/realtime";
 
 const MobileHeader = () => {
   const unread = useUnreadNotifications();
-  const totalUnread = mockConversations.reduce((s, c) => s + c.unread, 0);
+  const totalUnread = useUnreadMessages();
   const { theme, toggle } = useTheme();
   return (
     <header className="md:hidden fixed top-0 left-0 right-0 bg-ig-surface border-b border-ig-border z-50 h-[44px] flex items-center justify-between px-4">

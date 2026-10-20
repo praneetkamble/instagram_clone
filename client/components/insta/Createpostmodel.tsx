@@ -1,6 +1,5 @@
 "use client";
 
-import { currentUser } from "@/lib/mock-data";
 import { ChevronDown, ChevronLeft, ImageIcon, MapPin, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { uploadImage } from "@/lib/imgbb.service";
@@ -325,7 +324,7 @@ const Createpostmodel = ({ onClose }: CreatePostModalProps) => {
                 {/* User + caption */}
                 <div className="p-4 flex gap-3">
                   <img
-                    src={me?.profilePicture || currentUser.profilePic}
+                    src={me?.profilePicture || "https://i.pravatar.cc/150?u=" + (me?._id || "me")}
                     alt=""
                     className="w-8 h-8 rounded-full object-cover shrink-0"
                   />

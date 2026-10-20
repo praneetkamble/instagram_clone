@@ -41,3 +41,12 @@ export function useUnreadNotifications() {
   usePoll(load, 15000, !!user);
   return n;
 }
+
+export function useUnreadMessages() {
+  const user = useAuthStore((s: any) => s.user);
+  const [n, setN] = useState(0);
+  const load = async () => { if (!user) return; const r = await axiosInstance.get("/api/conversation/unread-count"); setN(r.data.unread || 0); };
+  useEffect(() => { load().catch(() => {}); }, [user?._id]); // eslint-disable-line react-hooks/exhaustive-deps
+  usePoll(load, 20000, !!user);
+  return n;
+}
