@@ -104,7 +104,7 @@ const Sidebar = () => {
           <Link
             key={label}
             href={href}
-            className={`flex items-center gap-4 px-3 py-3 rounded-lg hover:bg-ig-hover transition-colors ${isActive(href) ? "font-bold" : ""}`}
+            className={`flex items-center gap-4 px-3 py-3 rounded-lg hover:bg-ig-hover transition-all hover:translate-x-0.5 ${isActive(href) ? "font-bold bg-ig-hover" : ""}`}
           >
             <div className="relative shrink-0">
               <Icon
@@ -144,7 +144,7 @@ const Sidebar = () => {
         {/* Profile */}
         <Link
           href="/profile"
-          className={`flex items-center gap-4 px-3 py-3 rounded-lg hover:bg-ig-hover transition-colors ${isActive("/profile") ? "font-bold" : ""}`}
+          className={`flex items-center gap-4 px-3 py-3 rounded-lg hover:bg-ig-hover transition-all ${isActive("/profile") ? "font-bold bg-ig-hover" : ""}`}
         >
           <div className="w-6 h-6 rounded-full overflow-hidden shrink-0">
             <img

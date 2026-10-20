@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import PageShell, { Card, inputCls, btnCls, btn2Cls } from "@/components/insta/PageShell";
+import PageShell, { Card, EmptyState, inputCls, btnCls, btn2Cls } from "@/components/insta/PageShell";
 import axiosInstance from "@/lib/axios";
 import useAuthStore from "@/store/authStore";
 import { useI18n, errorText } from "@/lib/i18n";
@@ -51,7 +51,7 @@ export default function ArchivePage() {
             <button onClick={() => setSel(sel.includes(s._id) ? sel.filter((x) => x !== s._id) : [...sel, s._id])} className="block w-full">
               {s.media[0]?.type === "video" ? <video src={s.media[0].url} className="w-full aspect-[9/16] object-cover" muted /> : <img src={s.media[0]?.url} className="w-full aspect-[9/16] object-cover" alt="" />}
             </button>
-            <div className="absolute top-1 left-1 text-[10px] bg-black/60 text-white px-1 rounded">{isArchived(s) ? t("story.archived") : t("story.active")}</div>
+            <div className="absolute top-1 left-1 text-[10px] ig-backdrop text-white px-1 rounded">{isArchived(s) ? t("story.archived") : t("story.active")}</div>
             <div className="p-1 text-[11px] text-ig-text bg-ig-surface">
               <div>{fmtDate(s.createdAt)}</div>
               <div className="flex justify-between"><span>👁 {s.viewsCount} · 👤 {s.uniqueViewers}</span><Link className="text-[#0095f6]" href={`/stories/${s._id}/analytics`}>{t("story.insights")}</Link></div>
@@ -59,7 +59,7 @@ export default function ArchivePage() {
           </div>
         ))}
       </div>
-      {!stories.length && <p className="text-ig-muted text-sm">{t("common.none")}</p>}
+      {!stories.length && <EmptyState icon="📚" title={t("common.none")} />}
     </PageShell>
   );
 }

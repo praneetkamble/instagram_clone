@@ -101,7 +101,7 @@ const PAGE = () => {
     <div className="min-h-screen bg-ig-bg flex flex-col items-center justify-center px-4 py-8">
       <div className="w-full max-w-[350px] flex flex-col gap-3">
         {/* Main card */}
-        <div className="bg-ig-surface border border-ig-border rounded-sm px-10 pt-10 pb-6">
+        <div className="ig-card ig-fade-in px-8 sm:px-10 pt-10 pb-6">
           {/* Logo */}
           <h1 className="instagram-font text-[38px] text-center text-ig-text mb-4 leading-none">
             Instagram
@@ -266,7 +266,7 @@ const PAGE = () => {
             <button
               type="submit"
               disabled={!allFilled || loading}
-              className="w-full bg-[#0095f6] text-white text-sm font-semibold rounded-lg py-[7px] mt-2 disabled:opacity-50 hover:bg-[#1877f2] transition-colors active:scale-[0.98]"
+              className="ig-btn ig-btn-gradient w-full !py-2 mt-2"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -299,7 +299,7 @@ const PAGE = () => {
         </div>
 
         {/* Log in card */}
-        <div className="bg-ig-surface border border-ig-border rounded-sm py-4 text-center">
+        <div className="ig-card py-4 text-center">
           <p className="text-sm text-ig-text">
             {t("auth.haveAccount")}{" "}
             <Link

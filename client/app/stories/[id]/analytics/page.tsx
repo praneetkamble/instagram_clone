@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import PageShell, { Card } from "@/components/insta/PageShell";
+import PageShell, { Card, StatCard, Skeleton } from "@/components/insta/PageShell";
 import axiosInstance from "@/lib/axios";
 import { socket } from "@/lib/socket";
 import { useI18n, errorText } from "@/lib/i18n";
@@ -24,11 +24,11 @@ export default function StoryAnalyticsPage() {
     return () => { socket.off("story:analytics", h); };
   }, [id, load]);
   if (err) return <PageShell><p className="text-[#ed4956]">{err}</p></PageShell>;
-  if (!data) return <PageShell><p className="text-ig-muted">{t("common.loading")}</p></PageShell>;
+  if (!data) return <PageShell wide><Skeleton className="h-8 w-48 mb-6" /><div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">{[0,1,2,3,4].map((i) => <Skeleton key={i} className="h-24" />)}</div><Skeleton className="h-48" /></PageShell>;
   const { totals, story, viewers, reactions, replies, timeline } = data;
   const max = Math.max(1, ...timeline.map((x: any) => x.totalViews));
   const stat = (label: string, value: any, testid: string) => (
-    <Card className={`text-center transition-colors ${flash ? "ring-2 ring-[#0095f6]" : ""}`}><div data-testid={testid} className="text-2xl font-bold text-ig-text">{value}</div><div className="text-xs text-ig-muted">{label}</div></Card>
+    <StatCard label={label} value={value} testid={testid} accent highlight={flash} />
   );
   return (
     <PageShell title={t("analytics.title")} wide>
@@ -37,7 +37,7 @@ export default function StoryAnalyticsPage() {
         <div className="text-sm text-ig-text space-y-1">
           <p>{fmtDate(story.createdAt)} · {story.media.length} media · {story.privacy === "close_friends" ? t("story.closeFriends") : story.privacy === "followers" ? t("story.followers") : t("story.public")}</p>
           <p className={story.isArchived ? "text-ig-muted" : "text-green-600"}>{story.isArchived ? t("story.archived") : t("story.active")}</p>
-          <p className="text-xs text-green-600">● {t("analytics.live")}</p>
+          <p className="text-xs text-green-600 flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse" /> {t("analytics.live")}</p>
         </div>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
@@ -54,7 +54,7 @@ export default function StoryAnalyticsPage() {
             {timeline.map((p: any) => (
               <div key={p.time} className="flex flex-col items-center justify-end min-w-[38px] h-full" title={`${p.time}: ${p.totalViews}`}>
                 <span className="text-[10px] text-ig-muted">{p.totalViews}</span>
-                <div className="w-6 bg-[#0095f6] rounded-t" style={{ height: `${(p.totalViews / max) * 100}%` }} />
+                <div className="w-6 rounded-t-md ig-grad shadow-sm transition-all duration-500 hover:brightness-110" style={{ height: `${(p.totalViews / max) * 100}%` }} />
                 <span className="text-[10px] text-ig-muted mt-1">{p.time.slice(11)}</span>
               </div>
             ))}

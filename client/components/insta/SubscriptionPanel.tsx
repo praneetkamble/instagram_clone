@@ -4,7 +4,7 @@ import axiosInstance from "@/lib/axios";
 import useAuthStore from "@/store/authStore";
 import { useI18n, errorText } from "@/lib/i18n";
 import { toast } from "../ui/toast";
-import { Card, btnCls, btn2Cls } from "./PageShell";
+import { Card, btnCls, btn2Cls, btnGradCls, Skeleton } from "./PageShell";
 
 declare global { interface Window { Razorpay: any } }
 const loadRzp = () => new Promise<boolean>((res) => {
@@ -69,7 +69,7 @@ export default function SubscriptionPanel() {
     try { await axiosInstance.post("/api/subscriptions/cancel"); toast.add({ type: "success", title: t("sub.cancelled") }); load(); }
     catch (e) { toast.add({ type: "error", title: errorText(t, e) }); }
   };
-  if (!info) return <p className="text-ig-muted">{t("common.loading")}</p>;
+  if (!info) return <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">{[0,1,2,3].map((i) => <Skeleton key={i} className="h-44" />)}</div>;
   const cur = info.current.plan;
   const open = info.paymentWindow.open;
   return (
@@ -78,31 +78,33 @@ export default function SubscriptionPanel() {
         {open ? t("sub.windowOpen") : t("sub.windowClosed")}
       </div>
       <p className="text-sm text-ig-text">{t("create.quota", { used: info.quota.used, limit: info.quota.limit ?? t("create.unlimited"), plan: planName(cur) })}{info.current.expiresAt && cur !== "free" ? ` · ${t("sub.validUntil", { date: fmtDate(info.current.expiresAt) })}` : ""}</p>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-3">
         {info.plans.map((p: any) => (
-          <Card key={p.id} className={cur === p.id ? "ring-2 ring-[#0095f6]" : ""}>
-            <h3 className="font-semibold text-ig-text">{p.name}</h3>
-            <p className="text-2xl font-bold text-ig-text">₹{p.price}<span className="text-xs font-normal text-ig-muted">{p.price ? t("sub.perMonth") : ""}</span></p>
-            <p className="text-sm text-ig-muted mb-3">{p.postLimit ? t("sub.posts", { count: p.postLimit }) : t("sub.unlimitedPosts")}</p>
-            {p.id === "free" ? (cur === "free" ? <span className="text-xs text-[#0095f6]">{t("sub.currentPlan")}</span> : null) : (
-              <button className={cur === p.id ? btn2Cls : btnCls} disabled={!open || busy === p.id} title={!open ? t("sub.windowClosed") : ""} onClick={() => buy(p.id)}>
+          <div key={p.id} className={`relative rounded-[16px] ${p.id === "gold" ? "ig-grad p-[2px] shadow-[0_12px_32px_-12px_rgba(220,39,67,.55)] lg:-translate-y-1" : ""}`}>
+          {p.id === "gold" && <span className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 ig-grad text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow">★ {p.name}</span>}
+          <div className={`ig-card ig-card-hover h-full p-5 flex flex-col ${p.id === "gold" ? "!border-transparent !rounded-[14px]" : ""} ${cur === p.id ? "ring-2 ring-[#0095f6]" : ""}`}>
+            <h3 className="font-semibold text-ig-text flex items-center gap-2">{p.name}{cur === p.id && <span className="text-[10px] font-semibold text-[#0095f6] bg-[#0095f6]/10 px-2 py-0.5 rounded-full">{t("sub.currentPlan")}</span>}</h3>
+            <p className={`text-3xl font-extrabold tracking-tight mt-2 ${p.id === "gold" ? "ig-grad-text" : "text-ig-text"}`}>₹{p.price}<span className="text-xs font-normal text-ig-muted">{p.price ? t("sub.perMonth") : ""}</span></p>
+            <p className="text-sm text-ig-muted mb-4 flex-1">✓ {p.postLimit ? t("sub.posts", { count: p.postLimit }) : t("sub.unlimitedPosts")}</p>
+            {p.id === "free" ? null : (
+              <button className={(cur === p.id ? btn2Cls : p.id === "gold" ? btnGradCls : btnCls) + " w-full"} disabled={!open || busy === p.id} title={!open ? t("sub.windowClosed") : ""} onClick={() => buy(p.id)}>
                 {cur === p.id ? t("sub.renew") : t("sub.choose", { plan: p.name })}
               </button>
             )}
-          </Card>
+          </div></div>
         ))}
       </div>
       {info.current.subscription?.status === "active" && <button className="text-sm text-[#ed4956]" onClick={cancel}>{t("sub.cancel")}</button>}
       <Card>
         <h3 className="font-semibold text-ig-text mb-2">{t("sub.history")}</h3>
-        <div className="overflow-x-auto"><table className="w-full min-w-[560px] text-xs text-ig-text">
+        <div className="overflow-x-auto"><table className="ig-table w-full min-w-[560px] text-xs text-ig-text">
           <thead className="text-left text-ig-muted"><tr><th>{t("common.date")}</th><th>{t("sub.plan")}</th><th>{t("sub.amount")}</th><th>{t("common.status")}</th><th>{t("sub.invoice")}</th><th>{t("common.to")}</th></tr></thead>
           <tbody>{history.map((h) => <tr key={h._id} className="border-t border-ig-border"><td className="py-1">{fmtDate(h.createdAt)}</td><td>{planName(h.plan)}</td><td>₹{h.amount}</td><td>{t(`val.${h.status}`)}{h.failureReason ? ` (${h.failureReason})` : ""}</td><td>{h.invoiceNumber || "—"}</td><td>{h.endsAt ? fmtDate(h.endsAt, { dateStyle: "medium" }) : "—"}</td></tr>)}</tbody>
         </table></div>
       </Card>
       {mockOrder && (
-        <div className="fixed inset-0 z-[100] bg-black/60 flex items-center justify-center p-4">
-          <Card className="max-w-sm w-full space-y-3">
+        <div className="fixed inset-0 z-[100] ig-backdrop flex items-center justify-center p-4">
+          <Card className="ig-modal max-w-sm w-full space-y-3">
             <h3 className="font-semibold text-ig-text">{t("sub.mockTitle")}</h3>
             <p className="text-sm text-ig-text">{planName(mockOrder.plan)} · ₹{mockOrder.amount / 100} · {mockOrder.orderId}</p>
             <button className={btnCls + " w-full"} onClick={() => mockPay("success")}>{t("sub.mockPay")}</button>

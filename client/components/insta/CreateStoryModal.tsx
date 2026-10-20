@@ -35,7 +35,7 @@ export default function CreateStoryModal({ onClose, onCreated }: { onClose: () =
     finally { setBusy(false); }
   };
   return (
-    <div className="fixed inset-0 z-[100] bg-black/70 flex items-center justify-center p-4" data-testid="create-story">
+    <div className="fixed inset-0 z-[100] ig-backdrop flex items-center justify-center p-4" data-testid="create-story">
       <div className="bg-ig-surface rounded-xl w-full max-w-md p-4 flex flex-col gap-3">
         <div className="flex items-center justify-between"><h2 className="font-semibold text-ig-text">{t("story.new")}</h2><button onClick={onClose}><X className="text-ig-text" /></button></div>
         <input ref={ref} type="file" accept="image/*,video/*" multiple hidden onChange={(e) => pick(e.target.files)} />
@@ -43,7 +43,7 @@ export default function CreateStoryModal({ onClose, onCreated }: { onClose: () =
           {previews.map((p, i) => (
             <div key={i} className="relative aspect-[9/16] bg-black rounded overflow-hidden">
               {p.type === "video" ? <video src={p.url} className="w-full h-full object-cover" muted /> : <img src={p.url} className="w-full h-full object-cover" alt="" />}
-              <button className="absolute top-1 right-1 bg-black/60 rounded-full text-white" onClick={() => { setFiles(files.filter((_, j) => j !== i)); setPreviews(previews.filter((_, j) => j !== i)); }}><X size={14} /></button>
+              <button className="absolute top-1 right-1 ig-backdrop rounded-full text-white" onClick={() => { setFiles(files.filter((_, j) => j !== i)); setPreviews(previews.filter((_, j) => j !== i)); }}><X size={14} /></button>
             </div>
           ))}
           {files.length < 10 && <button onClick={() => ref.current?.click()} className="aspect-[9/16] border-2 border-dashed border-ig-border rounded flex flex-col items-center justify-center text-ig-muted text-xs gap-1"><ImagePlus />{t("story.add")}</button>}

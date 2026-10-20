@@ -115,7 +115,7 @@ function SettingsInner() {
   return (
     <PageShell title={t("settings.title")} wide>
       <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap">
-        {TABS.map((k) => <button key={k} onClick={() => router.push(`/settings?tab=${k}`)} className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-sm ${tab === k ? "bg-ig-text text-ig-text-inverse" : "bg-ig-hover text-ig-text"}`}>{labels[k]}</button>)}
+        {TABS.map((k) => <button key={k} onClick={() => router.push(`/settings?tab=${k}`)} className={`ig-pill ${tab === k ? "ig-pill-on" : "ig-pill-off"}`}>{labels[k]}</button>)}
       </div>
       {tab === "profile" && <ProfileTab />}
       {tab === "language" && <LanguageTab />}

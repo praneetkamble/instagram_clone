@@ -168,7 +168,7 @@ const Createpostmodel = ({ onClose }: CreatePostModalProps) => {
     } else onClose();
   };
   return (
-    <div className="fixed inset-0 z-[150] bg-black/70 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[150] ig-backdrop flex items-center justify-center p-4">
       <div
         className="bg-ig-surface rounded-xl overflow-hidden w-full max-w-[860px] shadow-2xl flex flex-col"
         style={{ maxHeight: "92vh" }}

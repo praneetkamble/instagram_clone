@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import PageShell, { Card, inputCls, btnCls, btn2Cls } from "@/components/insta/PageShell";
+import PageShell, { Card, EmptyState, inputCls, btnCls, btn2Cls } from "@/components/insta/PageShell";
 import axiosInstance from "@/lib/axios";
 import { useI18n, errorText } from "@/lib/i18n";
 import { toast } from "@/components/ui/toast";
@@ -31,7 +31,7 @@ export default function ScheduledPage() {
     <PageShell title={t("sched.title")}>
       <p className="text-sm text-ig-muted mb-3">{t("sched.limitNote", { max })}</p>
       <div className="flex flex-wrap gap-2 mb-4">
-        {["", "scheduled", "published", "cancelled", "failed"].map((s) => <button key={s} onClick={() => setStatus(s)} className={`px-3 py-1 rounded-full text-xs ${status === s ? "bg-[#0095f6] text-white" : "bg-ig-hover text-ig-text"}`}>{s ? t(`sched.status.${s}`) : t("common.all")}</button>)}
+        {["", "scheduled", "published", "cancelled", "failed"].map((s) => <button key={s} onClick={() => setStatus(s)} className={`ig-pill ${status === s ? "ig-pill-on" : "ig-pill-off"}`}>{s ? t(`sched.status.${s}`) : t("common.all")}</button>)}
       </div>
       <div className="space-y-3">
         {items.map((p) => (
@@ -53,11 +53,11 @@ export default function ScheduledPage() {
             </div>
           </Card>
         ))}
-        {!items.length && <p className="text-sm text-ig-muted">{t("common.none")}</p>}
+        {!items.length && <EmptyState icon="🗓️" title={t("common.none")} />}
       </div>
       {edit && (
-        <div className="fixed inset-0 z-[100] bg-black/60 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md space-y-2 max-h-[90vh] overflow-auto">
+        <div className="fixed inset-0 z-[100] ig-backdrop flex items-center justify-center p-4">
+          <Card className="ig-modal w-full max-w-md space-y-2 max-h-[90vh] overflow-auto">
             <h3 className="font-semibold text-ig-text">{t("sched.reschedule")}</h3>
             <textarea className={inputCls} rows={3} value={edit.caption} onChange={(e) => setEdit({ ...edit, caption: e.target.value })} placeholder={t("create.caption")} />
             <input className={inputCls} value={edit.hashtagsText} onChange={(e) => setEdit({ ...edit, hashtagsText: e.target.value })} placeholder={t("create.hashtags")} />

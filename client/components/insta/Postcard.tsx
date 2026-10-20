@@ -101,7 +101,7 @@ const Postcard = ({ post }: any) => {
     ? localComments
     : localComments?.slice(0, 2);
   return (
-    <article className="bg-ig-surface border-b border-ig-border md:border md:rounded-sm md:mb-6">
+    <article className="bg-ig-surface border-b border-ig-border md:border md:rounded-2xl md:mb-6 md:shadow-[var(--ig-shadow-sm)] md:overflow-hidden ig-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3">
         <Link

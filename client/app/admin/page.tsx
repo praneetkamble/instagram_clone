@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import PageShell, { Card, inputCls, btnCls, btn2Cls } from "@/components/insta/PageShell";
+import PageShell, { Card, StatCard, Skeleton, inputCls, btnCls, btn2Cls } from "@/components/insta/PageShell";
 import axiosInstance from "@/lib/axios";
 import useAuthStore from "@/store/authStore";
 import { useI18n, errorText } from "@/lib/i18n";
@@ -85,11 +85,11 @@ function Overview() {
   const { t } = useI18n();
   const [s, setS] = useState<any>(null);
   useEffect(() => { axiosInstance.get("/api/admin/stats").then((r) => setS(r.data.stats)).catch(() => {}); }, []);
-  if (!s) return <p className="text-ig-muted">{t("common.loading")}</p>;
+  if (!s) return <div className="grid grid-cols-2 md:grid-cols-5 gap-3">{Array.from({ length: 10 }).map((_, i) => <Skeleton key={i} className="h-24" />)}</div>;
   const items: [string, any][] = [[t("admin.users"), s.users], [t("admin.activeUsers"), s.activeUsers], [t("admin.posts"), s.posts], [t("admin.scheduled"), s.scheduled], [t("admin.activeStories"), s.activeStories], [t("admin.comments"), s.comments], [t("admin.openReports"), s.openReports], [t("admin.activeSubs"), s.activeSubscriptions], [t("admin.revenue"), `₹${s.revenue}`], [t("admin.failedLogins"), s.failedLogins7d]];
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3" data-testid="admin-stats">{items.map(([k, v]) => <Card key={k} className="text-center"><div className="text-2xl font-bold text-ig-text">{v}</div><div className="text-xs text-ig-muted">{k}</div></Card>)}</div>
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3" data-testid="admin-stats">{items.map(([k, v]) => <StatCard key={k} label={k} value={v} accent={String(k) === t("admin.revenue")} />)}</div>
       <Card><h3 className="font-semibold text-ig-text mb-2">{t("admin.planDist")}</h3><div className="flex gap-4 text-sm text-ig-text">{Object.entries(s.planDistribution).map(([k, v]) => <span key={k}>{k}: <b>{String(v)}</b></span>)}</div></Card>
     </div>
   );
@@ -148,8 +148,8 @@ function ResourceTable({ name }: { name: string }) {
         {cfg.create && <button className={btnCls} onClick={() => setCreating({})}>{t("admin.create")}</button>}
       </Card>
       <p className="text-xs text-ig-muted">{t("admin.total", { total: data.total })}</p>
-      <div className="overflow-x-auto bg-ig-surface border border-ig-border rounded-lg">
-        <table className="w-full min-w-[720px] text-xs text-ig-text" data-testid="admin-table">
+      <div className="overflow-x-auto ig-card">
+        <table className="ig-table w-full min-w-[720px] text-xs text-ig-text" data-testid="admin-table">
           <thead className="text-left text-ig-muted"><tr>{cfg.columns.map((c) => <th key={c.key} className="p-2 whitespace-nowrap">{c.key}</th>)}{!cfg.readOnly && <th className="p-2">{t("common.actions")}</th>}</tr></thead>
           <tbody>
             {data.items.map((r: any) => (
@@ -168,8 +168,8 @@ function ResourceTable({ name }: { name: string }) {
         <select className={inputCls + " max-w-[80px]"} value={q.limit} onChange={(e) => set("limit", +e.target.value)}>{[10, 20, 50, 100].map((n) => <option key={n}>{n}</option>)}</select>
       </div>
       {(edit || creating) && (
-        <div className="fixed inset-0 z-[100] bg-black/60 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md space-y-2 max-h-[90vh] overflow-auto">
+        <div className="fixed inset-0 z-[100] ig-backdrop flex items-center justify-center p-4">
+          <Card className="ig-modal w-full max-w-md space-y-2 max-h-[90vh] overflow-auto">
             <h3 className="font-semibold text-ig-text">{edit ? t("common.edit") : t("admin.create")} · {t(cfg.label)}</h3>
             {(edit ? cfg.edit : cfg.create!).map((f) => (
               <label key={f.key} className="block text-xs text-ig-muted">{f.key}
@@ -192,7 +192,7 @@ export default function AdminPage() {
   return (
     <PageShell title={t("admin.title")} wide>
       <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap">
-        {["overview", ...Object.keys(CFG)].map((k) => <button key={k} onClick={() => setTab(k)} className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-sm ${tab === k ? "bg-[#0095f6] text-white" : "bg-ig-hover text-ig-text"}`}>{k === "overview" ? t("admin.overview") : t(CFG[k].label)}</button>)}
+        {["overview", ...Object.keys(CFG)].map((k) => <button key={k} onClick={() => setTab(k)} className={`ig-pill ${tab === k ? "ig-pill-on" : "ig-pill-off"}`}>{k === "overview" ? t("admin.overview") : t(CFG[k].label)}</button>)}
       </div>
       {tab === "overview" ? <Overview /> : <ResourceTable key={tab} name={tab} />}
     </PageShell>

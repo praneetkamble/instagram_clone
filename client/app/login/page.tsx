@@ -159,7 +159,7 @@ const page = () => {
           {/* Right – form */}
           <div className="w-full max-w-[350px] flex flex-col gap-3">
             {/* Login card */}
-            <div className="bg-ig-surface border border-ig-border rounded-sm px-10 pt-10 pb-6">
+            <div className="ig-card ig-fade-in px-8 sm:px-10 pt-10 pb-6">
               {/* Logo */}
               <h1 className="instagram-font text-[38px] text-center text-ig-text mb-8 leading-none">
                 Instagram
@@ -204,7 +204,7 @@ const page = () => {
                 <button
                   type="submit"
                   disabled={!email || !password || loading}
-                  className="w-full bg-[#0095f6] text-white text-sm font-semibold rounded-lg py-[7px] mt-2 disabled:opacity-50 hover:bg-[#1877f2] transition-colors active:scale-[0.98]"
+                  className="ig-btn ig-btn-gradient w-full !py-2 mt-2"
                 >
                   {loading ? (
                     <span className="flex items-center justify-center gap-2">
@@ -268,7 +268,7 @@ const page = () => {
             </div>
 
             {/* Sign up card */}
-            <div className="bg-ig-surface border border-ig-border rounded-sm py-4 text-center">
+            <div className="ig-card py-4 text-center">
               <p className="text-sm text-ig-text">
                 {t("auth.noAccount")}{" "}
                 <Link

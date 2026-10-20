@@ -35,8 +35,14 @@ export default function Home() {
           <main className="flex-1 max-w-[600px]">
             <Stories />
             {loading ? (
-              <div className="flex justify-center py-20">
-                <p className="text-ig-muted">{t("feed.loading")}</p>
+              <div className="space-y-6 py-4" aria-label={t("feed.loading")}>
+                {[0, 1].map((i) => (
+                  <div key={i} className="ig-card p-4 space-y-3">
+                    <div className="flex items-center gap-3"><div className="ig-skeleton w-9 h-9 !rounded-full" /><div className="ig-skeleton h-3 w-32" /></div>
+                    <div className="ig-skeleton aspect-square w-full" />
+                    <div className="ig-skeleton h-3 w-2/3" />
+                  </div>
+                ))}
               </div>
             ) : (
               <>
