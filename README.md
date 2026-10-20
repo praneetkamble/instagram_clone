@@ -97,3 +97,16 @@ See `server/.env.example` and `client/.env.example`.
 1. Import the repo, set **Root Directory = `client`** (framework auto-detected: Next.js).
 2. Env var: `NEXT_PUBLIC_BACKEND_URL=https://<your-render-service>.onrender.com` (also `BACKEND_URL`, same value).
 3. Deploy, then put the Vercel URL into the API's `CLIENT_URL`.
+
+## Free backend hosting without a credit card (Railway)
+
+Render, Koyeb and Fly now ask for a card, and Hugging Face Docker Spaces need a paid PRO plan, so the backend ships with a root `Dockerfile` + `railway.json` for **Railway** (no card for Trial/Free; the service never sleeps, so Socket.io and the node-cron jobs keep running).
+
+1. Create a free **MongoDB Atlas M0** cluster (no card) → Network Access `0.0.0.0/0` → copy the `mongodb+srv://…` URI.
+2. Sign up at railway.com **with GitHub** (verified GitHub = Full Trial with outbound network for Atlas/SMTP).
+3. New Project → Deploy from GitHub repo → this repo, branch `internship-features` (the root Dockerfile is detected). Or, from the CLI with an account token: `RAILWAY_API_TOKEN=… railway init -n instai-api && railway up --detach`.
+4. Variables: `MONGODB_URI`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `CLIENT_URL=https://<your-vercel-app>`, `SEED_ON_START=true`, `SEED_DEMO=true`, `TZ=Asia/Kolkata`, plus optional SMTP/Razorpay/Groq keys. `PORT` is injected by Railway (image default 7860).
+5. Settings → Networking → Generate Domain, then set `PUBLIC_URL=https://<that-domain>` and on Vercel `NEXT_PUBLIC_BACKEND_URL=https://<that-domain>` and redeploy the client.
+6. Check `https://<domain>/api/health`.
+
+Notes: uploaded files live in the container (ephemeral — lost on redeploy). Trial = $5 credit for 30 days, then the Free plan gives $1/month (0.5 GB RAM), which a small idle Node service only roughly covers.

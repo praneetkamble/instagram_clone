@@ -19,6 +19,7 @@ const origins = (process.env.CLIENT_URL || "http://localhost:3000,https://instag
 app.use(cors({ origin: origins, credentials: true }));
 app.use(express.json({ limit: "2mb", verify: (req, _res, buf) => { req.rawBody = buf.toString(); } }));
 app.use(express.urlencoded({ extended: true }));
+app.get("/api/health", (_req, res) => res.json({ ok: true, uptime: Math.round(process.uptime()) }));
 app.use("/uploads", express.static(UPLOAD_DIR, { maxAge: "7d" }));
 
 app.use("/api/auth", authRoutes);
