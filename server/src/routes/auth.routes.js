@@ -1,17 +1,23 @@
 import express from "express";
-import {
-  getProfileByUsername,
-  login,
-  me,
-  register,
-} from "../controllers/auth.controller.js";
+import rateLimit from "express-rate-limit";
+import * as c from "../controllers/auth.controller.js";
 import { protect } from "../middleware/auth.middleware.js";
-
 const router = express.Router();
-
-router.post("/register", register);
-router.post("/login", login);
-router.get("/me", protect, me);
-router.get("/:username", protect, getProfileByUsername);
-
+const limiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: Number(process.env.AUTH_RATE_LIMIT || 100), standardHeaders: true, legacyHeaders: false });
+router.post("/register", limiter, c.register);
+router.post("/login", limiter, c.login);
+router.post("/login/verify-otp", limiter, c.verifyLoginOtp);
+router.post("/login/resend-otp", limiter, c.resendLoginOtp);
+router.post("/logout", protect, c.logout);
+router.get("/me", protect, c.me);
+router.put("/profile", protect, c.updateProfile);
+router.get("/login-history", protect, c.loginHistory);
+router.get("/sessions", protect, c.listSessions);
+router.delete("/sessions/:id", protect, c.revokeSession);
+router.post("/language/request", protect, c.requestLanguageChange);
+router.post("/language/verify", protect, c.verifyLanguageChange);
+router.get("/close-friends", protect, c.getCloseFriends);
+router.post("/close-friends/:id", protect, c.toggleCloseFriend);
+router.get("/search/users", protect, c.searchUsers);
+router.get("/:username", protect, c.getProfileByUsername);
 export default router;

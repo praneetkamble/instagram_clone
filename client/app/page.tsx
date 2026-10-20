@@ -6,12 +6,13 @@ import RightSidebar from "@/components/insta/RightSidebar";
 import Sidebar from "@/components/insta/Sidebar";
 import Stories from "@/components/insta/Stories";
 import axiosInstance from "@/lib/axios";
-import { mockPosts } from "@/lib/mock-data";
 import { useEffect, useState } from "react";
+import { useI18n } from "@/lib/i18n";
 
 export default function Home() {
   const [posts, setPosts] = useState([]);
   const [loading, setloading] = useState(true);
+  const { t } = useI18n();
   const fetchPosts = async () => {
     try {
       const res = await axiosInstance.get("/api/posts");
@@ -35,7 +36,7 @@ export default function Home() {
             <Stories />
             {loading ? (
               <div className="flex justify-center py-20">
-                <p className="text-ig-muted">Loading posts...</p>
+                <p className="text-ig-muted">{t("feed.loading")}</p>
               </div>
             ) : (
               <>
@@ -59,11 +60,11 @@ export default function Home() {
                   </div>
 
                   <p className="text-sm font-semibold text-ig-text">
-                    You're all caught up
+                    {t("feed.caughtUp")}
                   </p>
 
                   <p className="text-sm text-ig-muted text-center">
-                    You've seen all new posts from the past 3 days.
+                    {t("feed.caughtUpSub")}
                   </p>
                 </div>
               </>

@@ -31,10 +31,10 @@ export default function Page() {
   }, [username]);
   // const user = getUserByUsername(username || "");
   if (loading) {
-    return <div className="flex justify-center py-10">Loading profile...</div>;
+    return <div className="flex justify-center py-10">…</div>;
   }
   if (!user) {
-    return <div>User not found</div>;
+    return <div className="p-10 text-center">404</div>;
   }
 
   const isOwn = user.user._id === curuser?._id;

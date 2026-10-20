@@ -24,12 +24,28 @@ import Sidebar from "./Sidebar";
 import MobileNav from "./MobileNav";
 import PostModal from "./PostModal";
 import axiosInstance from "@/lib/axios";
+import { useEffect } from "react";
+import Link from "next/link";
+import { useI18n } from "@/lib/i18n";
+import useAuthStore from "@/store/authStore";
+import LoginHistory from "./LoginHistory";
+import StoryViewer from "./StoryViewer";
 
 type Tab = "posts" | "reels" | "saved" | "tagged";
 const ProfileView = ({ user, isOwnProfile }: any) => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>("posts");
-  const [following, setFollowing] = useState(user.user.followingCount);
+  const { t } = useI18n();
+  const me = useAuthStore((s: any) => s.user);
+  const [following, setFollowing] = useState<boolean>(!!user.isFollowing);
+  const [highlights, setHighlights] = useState<any[]>([]);
+  const [openHL, setOpenHL] = useState<any>(null);
+  const [isCF, setIsCF] = useState(false);
+  useEffect(() => {
+    axiosInstance.get(`/api/stories/highlights/${user.user._id}`).then((r) => setHighlights(r.data.items)).catch(() => {});
+    if (!isOwnProfile) axiosInstance.get("/api/auth/close-friends").then((r) => setIsCF(r.data.closeFriends.some((u: any) => u._id === user.user._id))).catch(() => {});
+  }, [user.user._id, isOwnProfile]);
+  const toggleCF = async () => { const r = await axiosInstance.post(`/api/auth/close-friends/${user.user._id}`); setIsCF(r.data.isCloseFriend); };
   const [followerCount, setFollowerCount] = useState(user.user.followersCount);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const posts = user.posts;
@@ -51,12 +67,12 @@ const ProfileView = ({ user, isOwnProfile }: any) => {
   };
 
   const tabs = [
-    { id: "posts" as Tab, icon: Grid3x3, label: "Posts" },
-    { id: "reels" as Tab, icon: Film, label: "Reels" },
+    { id: "posts" as Tab, icon: Grid3x3, label: t("profile.tabPosts") },
+    { id: "reels" as Tab, icon: Film, label: t("profile.tabReels") },
     ...(isOwnProfile
-      ? [{ id: "saved" as Tab, icon: Bookmark, label: "Saved" }]
+      ? [{ id: "saved" as Tab, icon: Bookmark, label: t("profile.tabSaved") }]
       : []),
-    { id: "tagged" as Tab, icon: Tag, label: "Tagged" },
+    { id: "tagged" as Tab, icon: Tag, label: t("profile.tabTagged") },
   ];
   return (
     <div className="bg-ig-surface md:bg-ig-ig min-h-screen">
@@ -132,15 +148,15 @@ const ProfileView = ({ user, isOwnProfile }: any) => {
               {/* Action buttons */}
               {isOwnProfile ? (
                 <div className="flex items-center gap-2 mb-4 flex-wrap">
-                  <button className="flex-1 sm:flex-none px-4 py-[7px] text-sm font-semibold text-ig-text bg-ig-hover rounded-lg hover:bg-ig-border transition-colors text-center">
-                    Edit profile
-                  </button>
-                  <button className="flex-1 sm:flex-none px-4 py-[7px] text-sm font-semibold text-ig-text bg-ig-hover rounded-lg hover:bg-ig-border transition-colors text-center">
-                    View archive
-                  </button>
-                  <button className="p-[7px] text-ig-text hover:bg-ig-hover rounded-lg transition-colors">
+                  <Link href="/settings" className="flex-1 sm:flex-none px-4 py-[7px] text-sm font-semibold text-ig-text bg-ig-hover rounded-lg hover:bg-ig-border transition-colors text-center">
+                    {t("profile.editProfile")}
+                  </Link>
+                  <Link href="/stories/archive" className="flex-1 sm:flex-none px-4 py-[7px] text-sm font-semibold text-ig-text bg-ig-hover rounded-lg hover:bg-ig-border transition-colors text-center">
+                    {t("nav.archive")}
+                  </Link>
+                  <Link href="/settings?tab=security" className="p-[7px] text-ig-text hover:bg-ig-hover rounded-lg transition-colors">
                     <Settings size={20} strokeWidth={1.5} />
-                  </button>
+                  </Link>
                 </div>
               ) : (
                 <div className="flex items-center gap-2 mb-4 flex-wrap">
@@ -154,19 +170,19 @@ const ProfileView = ({ user, isOwnProfile }: any) => {
                   >
                     {following ? (
                       <>
-                        <UserCheck size={15} /> Following
+                        <UserCheck size={15} /> {t("profile.unfollow")}
                       </>
                     ) : (
                       <>
-                        <UserPlus size={15} /> Follow
+                        <UserPlus size={15} /> {t("profile.follow")}
                       </>
                     )}
                   </button>
                   <button className="flex-1 sm:flex-none px-4 py-[7px] text-sm font-semibold text-ig-text bg-ig-hover rounded-lg hover:bg-ig-border transition-colors text-center">
-                    Message
+                    {t("profile.message")}
                   </button>
-                  <button className="p-[7px] text-ig-text bg-ig-hover rounded-lg hover:bg-ig-border transition-colors">
-                    <MoreHorizontal size={20} />
+                  <button onClick={toggleCF} title={isCF ? t("profile.removeCloseFriend") : t("profile.addCloseFriend")} className={`px-3 py-[7px] text-xs font-semibold rounded-lg ${isCF ? "bg-green-600 text-white" : "bg-ig-hover text-ig-text"}`}>
+                    ★ {isCF ? t("profile.removeCloseFriend") : t("profile.addCloseFriend")}
                   </button>
                 </div>
               )}
@@ -174,19 +190,19 @@ const ProfileView = ({ user, isOwnProfile }: any) => {
               {/* Stats — desktop only */}
               <div className="hidden md:flex items-center gap-8 mb-4">
                 <div className="text-sm text-ig-text">
-                  <span className="font-semibold">{posts.length}</span> posts
+                  <span className="font-semibold">{posts.length}</span> {t("profile.posts")}
                 </div>
                 <button className="text-sm text-ig-text hover:opacity-70">
                   <span className="font-semibold">
                     {formatLikeCount(followerCount)}
                   </span>{" "}
-                  followers
+                  {t("profile.followers")}
                 </button>
                 <button className="text-sm text-ig-text hover:opacity-70">
                   <span className="font-semibold">
-                    {formatLikeCount(following)}
+                    {formatLikeCount(user.user.followingCount)}
                   </span>{" "}
-                  following
+                  {t("profile.following")}
                 </button>
               </div>
 
@@ -237,9 +253,9 @@ const ProfileView = ({ user, isOwnProfile }: any) => {
           {/* Stats row — mobile */}
           <div className="md:hidden flex justify-around py-3 border-y border-ig-border mb-5">
             {[
-              { label: "posts", value: posts.length },
-              { label: "followers", value: followerCount },
-              { label: "following", value: user.user.followingCount },
+              { label: t("profile.posts"), value: posts.length },
+              { label: t("profile.followers"), value: followerCount },
+              { label: t("profile.following"), value: user.user.followingCount },
             ].map(({ label, value }) => (
               <button
                 key={label}
@@ -255,27 +271,22 @@ const ProfileView = ({ user, isOwnProfile }: any) => {
 
           {/* Story highlights */}
           <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 mb-5 md:mb-8 -mx-4 px-4">
-            {["Travel", "Food", "Work", "Family"].map((highlight) => (
-              <div
-                key={highlight}
-                className="flex flex-col items-center gap-2 shrink-0"
-              >
-                <div className="w-[62px] h-[62px] md:w-16 md:h-16 rounded-full border-2 border-ig-border flex items-center justify-center bg-ig-bg cursor-pointer hover:opacity-80 transition-opacity overflow-hidden">
-                  <div className="w-full h-full rounded-full bg-gradient-to-br from-[#f09433] via-[#dc2743] to-[#bc1888] opacity-20" />
+            {highlights.map((h: any) => (
+              <button key={h._id} onClick={() => h.stories.length && setOpenHL(h)} className="flex flex-col items-center gap-2 shrink-0">
+                <div className="w-[62px] h-[62px] md:w-16 md:h-16 rounded-full border-2 border-ig-border overflow-hidden">
+                  <img src={h.cover} className="w-full h-full object-cover" alt="" />
                 </div>
-                <span className="text-xs text-ig-text truncate w-[62px] text-center">
-                  {highlight}
-                </span>
-              </div>
+                <span className="text-xs text-ig-text truncate w-[62px] text-center">{h.title}</span>
+              </button>
             ))}
             {isOwnProfile && (
               <div className="flex flex-col items-center gap-2 shrink-0">
-                <div className="w-[62px] h-[62px] md:w-16 md:h-16 rounded-full border-2 border-dashed border-ig-border flex items-center justify-center cursor-pointer hover:border-ig-muted transition-colors">
+                <Link href="/stories/archive" className="w-[62px] h-[62px] md:w-16 md:h-16 rounded-full border-2 border-dashed border-ig-border flex items-center justify-center cursor-pointer hover:border-ig-muted transition-colors">
                   <span className="text-2xl text-ig-muted font-light leading-none">
                     +
                   </span>
-                </div>
-                <span className="text-xs text-ig-text">New</span>
+                </Link>
+                <span className="text-xs text-ig-text">{t("story.newHighlight")}</span>
               </div>
             )}
           </div>
@@ -327,7 +338,7 @@ const ProfileView = ({ user, isOwnProfile }: any) => {
                     </svg>
                   </div>
                   <p className="text-2xl font-semibold text-ig-text">
-                    No Posts Yet
+                    {t("profile.noPosts")}
                   </p>
                   {isOwnProfile && (
                     <p className="text-sm text-ig-muted">
@@ -352,7 +363,7 @@ const ProfileView = ({ user, isOwnProfile }: any) => {
                         <div className="flex items-center gap-1.5 text-white font-semibold">
                           <Heart size={20} className="fill-white text-white" />
                           <span className="text-sm">
-                            formatLikeCount(post.likesCount)
+                            {formatLikeCount(post.likesCount)}
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5 text-white font-semibold">
@@ -405,6 +416,14 @@ const ProfileView = ({ user, isOwnProfile }: any) => {
           )}
         </div>
       </div>
+      {isOwnProfile && (
+        <div className="md:ml-[72px] xl:ml-[244px] max-w-[935px] md:mx-auto px-4 pb-20">
+          <LoginHistory compact />
+        </div>
+      )}
+      {openHL && (
+        <StoryViewer readOnly groups={[{ user: user.user, stories: openHL.stories, isMine: false }]} onClose={() => setOpenHL(null)} />
+      )}
       <MobileNav />
       {/* {selectedPost && (
         <PostModal

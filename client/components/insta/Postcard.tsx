@@ -13,9 +13,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { useI18n, errorText } from "@/lib/i18n";
+import { toast } from "../ui/toast";
 
 const Postcard = ({ post }: any) => {
-  const user = useAuthStore((state) => state.user);
+  const user = useAuthStore((state: any) => state.user);
+  const { t } = useI18n();
   const [liked, setLiked] = useState(
     post.likes.some((like: any) => like.user?._id === user?._id),
   );
@@ -25,7 +28,16 @@ const Postcard = ({ post }: any) => {
   const [commentText, setCommentText] = useState("");
   const [showAllComments, setShowAllComments] = useState(false);
   const [captionExpanded, setCaptionExpanded] = useState(false);
-  const [localComments, setLocalComments] = useState(post.comments);
+  const [localComments, setLocalComments] = useState<any[]>(post.comments || []);
+  useEffect(() => {
+    if (post.commentsCount > 0) axiosInstance.get(`/api/posts/${post._id}/comments`).then((r) => setLocalComments(r.data.items.slice().reverse())).catch(() => {});
+  }, [post._id, post.commentsCount]);
+  const report = async () => {
+    const reason = prompt(t("post.reportReason"));
+    if (!reason) return;
+    try { await axiosInstance.post("/api/posts/reports", { targetType: "post", targetId: post._id, reason }); toast.add({ type: "success", title: t("post.reported") }); }
+    catch (e) { toast.add({ type: "error", title: errorText(t, e) }); }
+  };
   const lastTapRef = useRef(0);
 
   useEffect(() => {
@@ -68,22 +80,17 @@ const Postcard = ({ post }: any) => {
     lastTapRef.current = now;
   };
 
-  const handleComment = (e: React.FormEvent) => {
+  const handleComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentText.trim()) return;
-    setLocalComments((prev: any) => [
-      ...prev,
-      {
-        _id: `c_${Date.now()}`,
-        user: user,
-        text: commentText.trim(),
-        createdAt: new Date().toISOString(),
-      },
-    ]);
-    setCommentText("");
+    try {
+      const r = await axiosInstance.post(`/api/posts/${post._id}/comments`, { text: commentText.trim() });
+      setLocalComments((prev: any) => [...prev, r.data.comment]);
+      setCommentText("");
+    } catch (err) { toast.add({ type: "error", title: errorText(t, err) }); }
   };
 
-  const captionText = post.caption;
+  const captionText = post.caption || "";
   const isCaptionLong = captionText.length > 125;
   const displayCaption =
     isCaptionLong && !captionExpanded
@@ -133,7 +140,7 @@ const Postcard = ({ post }: any) => {
             )}
           </div>
         </Link>
-        <button className="text-ig-text hover:text-ig-muted transition-colors">
+        <button onClick={report} title="Report" className="text-ig-text hover:text-ig-muted transition-colors">
           <MoreHorizontal size={20} />
         </button>
       </div>
@@ -200,7 +207,7 @@ const Postcard = ({ post }: any) => {
 
         {/* Likes */}
         <p className="text-sm font-semibold text-ig-text mb-1">
-          {formatLikeCount(likeCount)} {likeCount === 1 ? "like" : "likes"}
+          {t("post.likes", { count: formatLikeCount(likeCount) })}
         </p>
 
         {/* Caption */}
@@ -228,7 +235,7 @@ const Postcard = ({ post }: any) => {
             onClick={() => setShowAllComments(true)}
             className="text-sm text-ig-muted mb-1 block"
           >
-            View all {localComments.length} comments
+            {t("post.viewComments")} ({localComments.length})
           </button>
         )}
         {visibleComments?.map((comment: any) => (
@@ -269,7 +276,7 @@ const Postcard = ({ post }: any) => {
               type="text"
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
-              placeholder="Add a comment…"
+              placeholder={t("post.addComment")}
               className="flex-1 text-sm text-ig-text placeholder:text-ig-muted outline-none bg-transparent"
             />
             <button
@@ -284,7 +291,7 @@ const Postcard = ({ post }: any) => {
               type="submit"
               className="text-sm font-semibold text-[#0095f6] hover:text-[#1877f2] dark:text-[#38b6ff] dark:hover:text-[#5cc8ff]"
             >
-              Post
+              {t("post.post")}
             </button>
           )}
         </form>

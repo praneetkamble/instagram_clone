@@ -2,7 +2,7 @@
 
 import { mockConversations } from "@/lib/mock-data";
 import { useTheme } from "@/lib/theme-context";
-import { Heart, Moon, Sun } from "lucide-react";
+import { Heart, Moon, Settings, Sun } from "lucide-react";
 import Link from "next/link";
 
 const MobileHeader = () => {
@@ -26,9 +26,12 @@ const MobileHeader = () => {
         </span>
       </Link>
       <div className="flex items-center gap-5">
-        <button className="text-ig-text active:opacity-60 transition-opacity">
+        <Link href="/settings" aria-label="settings" className="text-ig-text active:opacity-60 transition-opacity">
+          <Settings size={22} strokeWidth={1.5} />
+        </Link>
+        <Link href="/notifications" aria-label="notifications" className="text-ig-text active:opacity-60 transition-opacity">
           <Heart size={22} strokeWidth={1.5} />
-        </button>
+        </Link>
         <Link
           href="/messages"
           className="text-ig-text active:opacity-60 transition-opacity relative"

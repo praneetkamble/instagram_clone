@@ -14,7 +14,12 @@ import {
   Sun,
   Moon,
   LogOut,
+  CalendarClock,
+  Archive,
+  CreditCard,
+  Shield,
 } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme-context";
 import { currentUser, mockConversations } from "@/lib/mock-data";
 import { usePathname, useRouter } from "next/navigation";
@@ -31,27 +36,30 @@ const Sidebar = () => {
   const router = useRouter();
   const [moreOpen, setMoreOpen] = useState(false);
   const { open: openCreate } = useCreateModal();
+  const { t } = useI18n();
+  const me = useAuthStore((state: any) => state.user);
   const navItems = [
-    { label: "Home", icon: Home, href: "/", badge: 0 },
-    { label: "Search", icon: Search, href: "/search", badge: 0 },
-    { label: "Explore", icon: Compass, href: "/explore", badge: 0 },
-    { label: "Reels", icon: Film, href: "/reels", badge: 0 },
+    { label: t("nav.home"), icon: Home, href: "/", badge: 0 },
+    { label: t("nav.search"), icon: Search, href: "/search", badge: 0 },
+    { label: t("nav.explore"), icon: Compass, href: "/explore", badge: 0 },
+    { label: t("nav.reels"), icon: Film, href: "/reels", badge: 0 },
     {
-      label: "Messages",
+      label: t("nav.messages"),
       icon: MessageCircle,
       href: "/messages",
       badge: totalUnread,
     },
-    { label: "Notifications", icon: Heart, href: "/notifications", badge: 0 },
+    { label: t("nav.notifications"), icon: Heart, href: "/notifications", badge: 0 },
   ];
-  const logout = useAuthStore((state) => state.logout);
+  const logout = useAuthStore((state: any) => state.logout);
 
   const handlelogout = async () => {
+    try { await axiosInstance.post("/api/auth/logout"); } catch {}
     logout();
 
     toast.add({
       type: "success",
-      title: "Logout Successfully",
+      title: t("auth.logoutSuccess"),
     });
     router.push("/login");
   };
@@ -129,7 +137,7 @@ const Sidebar = () => {
             className="shrink-0 text-ig-text"
           />
           <span className="hidden xl:block text-[15px] text-ig-text font-normal">
-            Create
+            {t("nav.create")}
           </span>
         </button>
 
@@ -140,13 +148,13 @@ const Sidebar = () => {
         >
           <div className="w-6 h-6 rounded-full overflow-hidden shrink-0">
             <img
-              src={currentUser.profilePic}
-              alt={currentUser.username}
+              src={me?.profilePicture || currentUser.profilePic}
+              alt={me?.username || ""}
               className="w-full h-full object-cover"
             />
           </div>
           <span className="hidden xl:block text-[15px] text-ig-text">
-            Profile
+            {t("nav.profile")}
           </span>
         </Link>
       </div>
@@ -154,19 +162,23 @@ const Sidebar = () => {
       {/* More */}
       <div className="relative">
         {moreOpen && (
-          <div className="absolute bottom-14 left-0 w-[250px] bg-whiterounded-2xl shadow-xl border border-ig-border overflow-hidden z-50">
+          <div className="absolute bottom-14 left-0 w-[250px] bg-ig-surface rounded-2xl shadow-xl border border-ig-border overflow-hidden z-50">
             {[
-              { icon: Settings, label: "Settings" },
-              { icon: Activity, label: "Your activity" },
-              { icon: Bookmark, label: "Saved" },
-            ].map(({ icon: Icon, label }) => (
-              <button
+              { icon: Settings, label: t("nav.settings"), href: "/settings" },
+              { icon: CalendarClock, label: t("nav.scheduled"), href: "/scheduled" },
+              { icon: Archive, label: t("nav.archive"), href: "/stories/archive" },
+              { icon: CreditCard, label: t("nav.subscription"), href: "/settings?tab=subscription" },
+              ...(me?.role === "admin" ? [{ icon: Shield, label: t("nav.admin"), href: "/admin" }] : []),
+            ].map(({ icon: Icon, label, href }) => (
+              <Link
                 key={label}
+                href={href}
+                onClick={() => setMoreOpen(false)}
                 className="w-full flex items-center gap-3 px-4 py-3 text-sm text-ig-text hover:bg-ig-hover transition-colors"
               >
                 <Icon size={18} />
                 {label}
-              </button>
+              </Link>
             ))}
             {/* Theme toggle */}
             <button
@@ -174,7 +186,7 @@ const Sidebar = () => {
               className="w-full flex items-center gap-3 px-4 py-3 text-sm text-ig-text hover:bg-ig-hover transition-colors"
             >
               {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
-              {theme === "light" ? "Switch to dark" : "Switch to light"}
+              {theme === "light" ? t("nav.darkMode") : t("nav.lightMode")}
             </button>
             <div className="h-px bg-ig-border my-1" />
             <button
@@ -182,7 +194,7 @@ const Sidebar = () => {
               onClick={handlelogout}
             >
               <LogOut size={18} />
-              Log out
+              {t("nav.logout")}
             </button>
           </div>
         )}
@@ -191,7 +203,7 @@ const Sidebar = () => {
           className="flex items-center gap-4 px-3 py-3 rounded-lg hover:bg-ig-hover transition-colors w-full"
         >
           <Menu size={24} strokeWidth={1.5} className="text-ig-text shrink-0" />
-          <span className="hidden xl:block text-[15px] text-ig-text">More</span>
+          <span className="hidden xl:block text-[15px] text-ig-text">{t("nav.more")}</span>
         </button>
       </div>
     </aside>

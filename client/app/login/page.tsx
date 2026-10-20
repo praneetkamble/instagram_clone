@@ -7,6 +7,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import axiosInstance from "@/lib/axios";
+import { useI18n, errorText, LANGUAGES } from "@/lib/i18n";
+import OtpForm from "@/components/insta/OtpForm";
 const page = () => {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
@@ -15,37 +17,48 @@ const page = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const login = useAuthStore((state) => state.login);
+  const { t, lang, setLocalLang } = useI18n();
+  const [challenge, setChallenge] = useState<any>(null);
+  const finish = (data: any) => {
+    login({ user: data.user, token: data.accessToken });
+    toast.add({ type: "success", title: t("auth.loginSuccess"), description: t("auth.welcome", { name: data.user.username }) });
+    router.push("/");
+  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      setError("Please fill in all fields");
+      setError(t("validation.fillAll"));
       return;
     }
     setLoading(true);
     setError("");
     try {
-      const res = await axiosInstance.post("/api/auth/login", {
-        email: email,
-        password: password,
-      });
-      if (res.data.success) {
-        login({ user: res.data.user, token: res.data.accessToken });
-        toast.add({
-          type: "success",
-          title: "Login Successfulle",
-          description: `Hello ${res.data.user.username}`,
-        });
-        setLoading(false);
-        router.push("/");
-      }
+      const res = await axiosInstance.post("/api/auth/login", { email, password });
+      if (res.data.otpRequired) setChallenge(res.data);
+      else if (res.data.success) finish(res.data);
     } catch (error: any) {
-      console.log(error);
-      toast.add({
-        type: "error",
-        description: error.message,
-        priority: "high",
-      });
+      const msg = errorText(t, error);
+      setError(msg);
+      toast.add({ type: "error", description: msg, priority: "high" });
+    } finally {
+      setLoading(false);
     }
+  };
+  const verify = async (code: string) => {
+    try {
+      const res = await axiosInstance.post("/api/auth/login/verify-otp", { challengeToken: challenge.challengeToken, code });
+      finish(res.data);
+    } catch (e: any) {
+      if (["CHALLENGE_EXPIRED", "OTP_LOCKED"].includes(e?.response?.data?.code)) { setChallenge(null); setError(errorText(t, e)); }
+      throw new Error(errorText(t, e));
+    }
+  };
+  const resend = async () => {
+    try {
+      const res = await axiosInstance.post("/api/auth/login/resend-otp", { challengeToken: challenge.challengeToken });
+      setChallenge({ ...challenge, ...res.data });
+      toast.add({ type: "success", title: t("auth.codeResent") });
+    } catch (e: any) { throw new Error(errorText(t, e)); }
   };
 
   return (
@@ -158,10 +171,13 @@ const page = () => {
                 </p>
               )}
 
+              {challenge ? (
+                <OtpForm destination={challenge.destination} minutes={challenge.ttlMinutes} note={t("auth.chromeOtpNote")} onVerify={verify} onResend={resend} onCancel={() => setChallenge(null)} />
+              ) : (
               <form onSubmit={handleSubmit} className="flex flex-col gap-[6px]">
                 <input
                   type="email"
-                  placeholder="email"
+                  placeholder={t("auth.email")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-ig-bg border border-ig-border rounded-[3px] text-[12px] px-2 py-[9px] focus:outline-none focus:border-ig-muted placeholder:text-ig-muted text-ig-text"
@@ -169,7 +185,7 @@ const page = () => {
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
-                    placeholder="Password"
+                    placeholder={t("auth.password")}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full bg-ig-bg border border-ig-border rounded-[3px] text-[12px] px-2 py-[9px] pr-16 focus:outline-none focus:border-ig-muted placeholder:text-ig-muted text-ig-text"
@@ -211,13 +227,14 @@ const page = () => {
                           d="M4 12a8 8 0 018-8v8H4z"
                         />
                       </svg>
-                      Logging in…
+                      {t("auth.loggingIn")}
                     </span>
                   ) : (
-                    "Log in"
+                    t("auth.login")
                   )}
                 </button>
               </form>
+              )}
 
               {/* Divider */}
               <div className="flex items-center gap-4 my-4">
@@ -253,12 +270,12 @@ const page = () => {
             {/* Sign up card */}
             <div className="bg-ig-surface border border-ig-border rounded-sm py-4 text-center">
               <p className="text-sm text-ig-text">
-                Don&apos;t have an account?{" "}
+                {t("auth.noAccount")}{" "}
                 <Link
                   href="/signup"
                   className="text-[#0095f6] font-semibold hover:text-[#1877f2] dark:text-[#38b6ff] dark:hover:text-[#5cc8ff]"
                 >
-                  Sign up
+                  {t("auth.signup")}
                 </Link>
               </p>
             </div>
@@ -336,6 +353,9 @@ const page = () => {
             </a>
           ))}
         </div>
+        <select aria-label="language" value={lang} onChange={(e) => setLocalLang(e.target.value as any)} className="text-[12px] text-ig-muted bg-transparent mb-2">
+          {LANGUAGES.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}
+        </select>
         <p className="text-[12px] text-ig-muted">
           &copy; 2026 Instagram from Meta
         </p>

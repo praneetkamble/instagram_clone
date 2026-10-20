@@ -6,6 +6,10 @@ import { useRef, useState } from "react";
 import { uploadImage } from "@/lib/imgbb.service";
 import axiosInstance from "@/lib/axios";
 import { toast } from "../ui/toast";
+import { useI18n, errorText } from "@/lib/i18n";
+import useAuthStore from "@/store/authStore";
+import Link from "next/link";
+import { useEffect } from "react";
 type Stage = "select" | "crop" | "share";
 type AspectRatio = "original" | "1:1" | "4:5" | "16:9";
 
@@ -44,11 +48,20 @@ const Createpostmodel = ({ onClose }: CreatePostModalProps) => {
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [enhancedCaption, setEnhancedCaption] = useState(false);
+  const { t, fmtDate } = useI18n();
+  const me = useAuthStore((s: any) => s.user);
+  const [hashtags, setHashtags] = useState("");
+  const [tagged, setTagged] = useState("");
+  const [scheduleOn, setScheduleOn] = useState(false);
+  const [scheduledAt, setScheduledAt] = useState("");
+  const [visibility, setVisibility] = useState("public");
+  const [quota, setQuota] = useState<any>(null);
+  useEffect(() => { axiosInstance.get("/api/posts/quota").then((r) => setQuota(r.data.quota)).catch(() => {}); }, []);
   const handleenhancedcaption = async () => {
     if (!caption.trim()) {
       toast.add({
         type: "error",
-        title: "Write a caption first",
+        title: t("validation.captionFirst"),
       });
       return;
     }
@@ -107,42 +120,45 @@ const Createpostmodel = ({ onClose }: CreatePostModalProps) => {
   };
   const handleShare = async () => {
     if (!selectedFile) return;
+    let when: Date | null = null;
+    if (scheduleOn) {
+      when = new Date(scheduledAt);
+      if (!scheduledAt || isNaN(when.getTime()) || when <= new Date()) {
+        toast.add({ type: "error", title: t("validation.futureDate") });
+        return;
+      }
+    }
     setSharing(true);
     try {
       const uploadedImage = await uploadImage(selectedFile);
       const res = await axiosInstance.post("/api/posts", {
         caption,
         location,
+        visibility,
         media: [uploadedImage],
+        hashtags: hashtags.split(/[,\s]+/).filter(Boolean),
+        taggedUsers: tagged.split(/[,\s]+/).filter(Boolean),
+        scheduledAt: when ? when.toISOString() : undefined,
       });
       if (res.data.success) {
-        toast.add({
-          type: "success",
-          title: "Posted Successfulle",
-        });
+        toast.add({ type: "success", title: when ? t("create.scheduled", { date: fmtDate(when) }) : t("create.posted") });
       }
+      setShared(true);
       setTimeout(() => {
-        setCaption("");
-        setLocation("");
-        setSelectedFile(null);
-        setImage(null);
-        setStage("select");
-        setSharing(false);
-        setShared(true);
+        setCaption(""); setLocation(""); setSelectedFile(null); setImage(null); setStage("select"); setSharing(false);
         onClose();
-      }, 1200);
+        if (!when && typeof window !== "undefined" && window.location.pathname === "/") window.location.reload();
+      }, 900);
     } catch (error: any) {
-      toast.add({
-        type: "error",
-        title: error.message,
-      });
+      setSharing(false);
+      toast.add({ type: "error", title: errorText(t, error) });
     }
   };
   const imgClass = aspectOptions.find((o) => o.value === ratio)?.css ?? "";
   const title = {
-    select: "Create new post",
-    crop: "Crop",
-    share: "Create new post",
+    select: t("create.title"),
+    crop: t("create.title"),
+    share: t("create.title"),
   }[stage];
   const handleBack = () => {
     if (stage === "share") setStage("crop");
@@ -154,7 +170,7 @@ const Createpostmodel = ({ onClose }: CreatePostModalProps) => {
   return (
     <div className="fixed inset-0 z-[150] bg-black/70 flex items-center justify-center p-4">
       <div
-        className="bg-white rounded-xl overflow-hidden w-full max-w-[860px] shadow-2xl flex flex-col"
+        className="bg-ig-surface rounded-xl overflow-hidden w-full max-w-[860px] shadow-2xl flex flex-col"
         style={{ maxHeight: "92vh" }}
       >
         {/* Header */}
@@ -177,7 +193,7 @@ const Createpostmodel = ({ onClose }: CreatePostModalProps) => {
               onClick={() => setStage("share")}
               className="text-sm font-semibold text-[#0095f6] hover:text-[#1877f2] transition-colors"
             >
-              Next
+              {t("common.next")}
             </button>
           ) : (
             <button
@@ -185,7 +201,7 @@ const Createpostmodel = ({ onClose }: CreatePostModalProps) => {
               disabled={sharing || shared}
               className="text-sm font-semibold text-[#0095f6] hover:text-[#1877f2] disabled:opacity-50 transition-colors"
             >
-              {shared ? "Shared!" : sharing ? "Sharing…" : "Share"}
+              {shared ? t("common.success") : sharing ? t("common.loading") : scheduleOn ? t("create.scheduleBtn") : t("common.share")}
             </button>
           )}
         </div>
@@ -217,7 +233,7 @@ const Createpostmodel = ({ onClose }: CreatePostModalProps) => {
                 <p className="text-xl text-ig-text">
                   {dragging
                     ? "Drop your photo here"
-                    : "Drag photos and videos here"}
+                    : t("create.drag")}
                 </p>
                 <input
                   ref={fileRef}
@@ -231,7 +247,7 @@ const Createpostmodel = ({ onClose }: CreatePostModalProps) => {
                   onClickCapture={() => fileRef.current?.click()}
                   className="px-5 py-2 bg-[#0095f6] text-white text-sm font-semibold rounded-lg hover:bg-[#1877f2] transition-colors"
                 >
-                  Select from computer
+                  {t("create.select")}
                 </button>
               </div>
               <div className="p-4">
@@ -309,13 +325,13 @@ const Createpostmodel = ({ onClose }: CreatePostModalProps) => {
                 {/* User + caption */}
                 <div className="p-4 flex gap-3">
                   <img
-                    src={currentUser.profilePic}
-                    alt={currentUser.username}
+                    src={me?.profilePicture || currentUser.profilePic}
+                    alt=""
                     className="w-8 h-8 rounded-full object-cover shrink-0"
                   />
                   <div className="flex-1">
                     <p className="text-xs font-semibold text-ig-text mb-1">
-                      {currentUser.username}
+                      {me?.username}
                     </p>
                     <button
                       type="button"
@@ -323,12 +339,12 @@ const Createpostmodel = ({ onClose }: CreatePostModalProps) => {
                       disabled={enhancedCaption}
                       className="text-xs font-semibold text-[#0095f6] hover:text-[#1877f2] disabled:opacity-50 bg-gray-200 p-2 rounded-xl"
                     >
-                      {enhancedCaption ? "Enhancing..." : "✨ AI Enhance"}
+                      {enhancedCaption ? t("common.loading") : "✨ " + t("create.enhance")}
                     </button>
                     <textarea
                       value={caption}
                       onChange={(e) => setCaption(e.target.value)}
-                      placeholder="Write a caption…"
+                      placeholder={t("create.caption")}
                       rows={5}
                       maxLength={2200}
                       className="w-full text-sm text-ig-text placeholder:text-ig-muted outline-none resize-none"
@@ -347,10 +363,29 @@ const Createpostmodel = ({ onClose }: CreatePostModalProps) => {
                     type="text"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
-                    placeholder="Add location"
+                    placeholder={t("create.location")}
                     className="text-sm text-ig-text placeholder:text-ig-muted outline-none flex-1 bg-transparent"
                   />
                   <MapPin size={18} className="text-ig-muted shrink-0" />
+                </div>
+
+                {/* Hashtags / tags / visibility / schedule */}
+                <div className="px-4 py-3 space-y-2">
+                  <input value={hashtags} onChange={(e) => setHashtags(e.target.value)} placeholder={t("create.hashtags")} className="w-full text-sm text-ig-text placeholder:text-ig-muted outline-none bg-transparent" />
+                  <input value={tagged} onChange={(e) => setTagged(e.target.value)} placeholder={t("create.tagPeople")} className="w-full text-sm text-ig-text placeholder:text-ig-muted outline-none bg-transparent" />
+                  <label className="flex items-center justify-between text-sm text-ig-text">{t("create.visibility")}
+                    <select value={visibility} onChange={(e) => setVisibility(e.target.value)} className="bg-ig-bg border border-ig-border rounded px-2 py-1 text-xs">
+                      <option value="public">{t("story.public")}</option><option value="followers">{t("story.followers")}</option>
+                    </select>
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-ig-text"><input type="checkbox" checked={scheduleOn} onChange={(e) => setScheduleOn(e.target.checked)} />{t("create.schedule")}</label>
+                  {scheduleOn && <input type="datetime-local" value={scheduledAt} min={new Date(Date.now() + 60000 - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)} onChange={(e) => setScheduledAt(e.target.value)} className="w-full bg-ig-bg border border-ig-border rounded px-2 py-1 text-sm text-ig-text" />}
+                  {quota && (
+                    <p className={`text-xs ${quota.canPost ? "text-ig-muted" : "text-[#ed4956]"}`}>
+                      {t("create.quota", { used: quota.used, limit: quota.limit ?? t("create.unlimited"), plan: quota.plan })}
+                      {!quota.canPost && <> · <Link href="/settings?tab=subscription" className="text-[#0095f6]" onClick={onClose}>{t("create.upgrade")}</Link></>}
+                    </p>
+                  )}
                 </div>
 
                 {/* Accessibility */}

@@ -1,15 +1,17 @@
 import express from "express";
-import { protect } from "../middleware/auth.middleware.js";
-import {
-  createPost,
-  getPosts,
-  getUserPosts,
-} from "../controllers/post.controller.js";
-
+import { protect, optionalAuth } from "../middleware/auth.middleware.js";
+import * as c from "../controllers/post.controller.js";
 const router = express.Router();
-
-router.get("/", getPosts);
-router.post("/", protect, createPost);
-router.get("/user/:username", getUserPosts);
-
+router.get("/", optionalAuth, c.getPosts);
+router.post("/", protect, c.createPost);
+router.get("/quota", protect, c.getQuota);
+router.get("/scheduled", protect, c.myScheduled);
+router.get("/scheduled/:id", protect, c.getScheduled);
+router.put("/scheduled/:id", protect, c.updateScheduled);
+router.post("/scheduled/:id/cancel", protect, c.cancelScheduled);
+router.post("/reports", protect, c.createReport);
+router.get("/user/:username", c.getUserPosts);
+router.get("/:id/comments", c.listComments);
+router.post("/:id/comments", protect, c.addComment);
+router.delete("/:id", protect, c.deletePost);
 export default router;

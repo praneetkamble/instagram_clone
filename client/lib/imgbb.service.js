@@ -1,23 +1,12 @@
+import axiosInstance from "./axios";
+// Uploads to our own backend (/api/upload) so images AND videos work without third-party keys.
+export const uploadFiles = async (files) => {
+  const fd = new FormData();
+  for (const f of files) fd.append("files", f);
+  const res = await axiosInstance.post("/api/upload", fd, { headers: { "Content-Type": "multipart/form-data" } });
+  return res.data.files;
+};
 export const uploadImage = async (file) => {
-  const formData = new FormData();
-  formData.append("image", file);
-
-  const res = await fetch(
-    `https://api.imgbb.com/1/upload?key=${process.env.IMGBB_API_KEY}`,
-    {
-      method: "POST",
-      body: formData,
-    },
-  );
-  const data = await res.json();
-
-  if (!data.success) {
-    throw new Error("Image upload failed");
-  }
-  return {
-    url: data.data.url,
-    type: "image",
-    width: Number(data.data.width),
-    height: Number(data.data.height),
-  };
+  const [f] = await uploadFiles([file]);
+  return { url: f.url, type: f.type };
 };
