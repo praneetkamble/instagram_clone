@@ -32,7 +32,7 @@ export default function Home() {
       <Sidebar />
       <div className="md:ml-[72px] xl:ml-[244px]">
         <div className="max-w-[1200px] mx-auto flex gap-10 px-8 py-6">
-          <main className="flex-1 max-w-[600px]">
+          <main className="flex-1 min-w-0 max-w-[600px]">
             <Stories />
             {loading ? (
               <div className="space-y-6 py-4" aria-label={t("feed.loading")}>

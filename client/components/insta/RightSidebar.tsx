@@ -10,7 +10,7 @@ const RightSidebar = () => {
     setFollowed((prev) => ({ ...prev, [id]: !prev[id] }));
   };
   return (
-    <aside className="hidden lg:block w-[320px] shrink-0 pt-6">
+    <aside className="hidden xl:block w-[320px] shrink-0 pt-6">
       {/* Current user */}
       <div className="flex items-center gap-3 mb-5 px-1">
         <Link href="/profile">

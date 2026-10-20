@@ -62,13 +62,18 @@ const page = () => {
   };
 
   return (
-    <div className="min-h-screen bg-ig-bg flex flex-col">
+    <div className="min-h-screen ig-mesh flex flex-col"><div className="ig-mesh-orb" />
       {/* Desktop: two-column; Mobile: single card */}
-      <div className="flex-1 flex items-center justify-center px-4 py-8">
+      <div className="relative z-10 flex-1 flex items-center justify-center px-4 py-8">
         <div className="w-full flex gap-8 items-center justify-center max-w-[900px]">
           {/* Left – phone mockup (desktop only) */}
           <div className="hidden lg:flex flex-col items-center justify-center w-[380px] shrink-0">
-            <div className="relative w-[250px] h-[500px]">
+            <div className="relative w-[250px] h-[500px] ig-float" style={{ ["--r" as any]: "0deg" }}>
+              {/* floating collage */}
+              <div className="ig-float-2 absolute -left-16 top-16 w-36 rounded-2xl ig-glass !rounded-2xl p-2 rotate-[-8deg] z-10" style={{ ["--r" as any]: "-8deg" }}><img src="https://picsum.photos/seed/ig4/300/300" alt="" className="rounded-xl w-full aspect-square object-cover" /><div className="flex items-center gap-1 px-1 pt-1.5 text-[10px] font-semibold text-ig-text">❤️ 2,481</div></div>
+              <div className="ig-float-3 absolute -right-20 top-40 w-40 rounded-2xl ig-glass !rounded-2xl p-2 rotate-[7deg] z-10" style={{ ["--r" as any]: "7deg" }}><img src="https://picsum.photos/seed/ig9/300/380" alt="" className="rounded-xl w-full aspect-[4/5] object-cover" /><div className="px-1 pt-1.5 text-[10px] text-ig-text"><b>kabir.lens</b> monsoon on film 🌧️</div></div>
+              <div className="ig-float absolute -left-10 bottom-10 z-10 ig-glass !rounded-full px-3 py-2 flex items-center gap-2 text-xs font-semibold text-ig-text"><span className="w-7 h-7 rounded-full ig-grad flex items-center justify-center text-white">♥</span> aanya.travels liked your post</div>
+              
               {/* Phone frame */}
               <div className="absolute inset-0 rounded-[36px] border-4 border-ig-text bg-ig-surface shadow-2xl overflow-hidden">
                 {/* Status bar */}
@@ -159,9 +164,9 @@ const page = () => {
           {/* Right – form */}
           <div className="w-full max-w-[350px] flex flex-col gap-3">
             {/* Login card */}
-            <div className="ig-card ig-fade-in px-8 sm:px-10 pt-10 pb-6">
+            <div className="ig-glass ig-fade-in relative z-10 px-8 sm:px-10 pt-10 pb-6">
               {/* Logo */}
-              <h1 className="instagram-font text-[38px] text-center text-ig-text mb-8 leading-none">
+              <h1 className="instagram-font text-[42px] text-center ig-grad-text mb-8 leading-none">
                 Instagram
               </h1>
 
@@ -268,7 +273,7 @@ const page = () => {
             </div>
 
             {/* Sign up card */}
-            <div className="ig-card py-4 text-center">
+            <div className="ig-glass !rounded-2xl relative z-10 py-4 text-center">
               <p className="text-sm text-ig-text">
                 {t("auth.noAccount")}{" "}
                 <Link
@@ -329,7 +334,7 @@ const page = () => {
       </div>
 
       {/* Footer */}
-      <footer className="py-4 text-center">
+      <footer className="py-4 text-center relative z-10">
         <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 mb-2">
           {[
             "Meta",

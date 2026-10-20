@@ -14,7 +14,7 @@ function StoryRing({ pic, label, hasStory = true, viewed = false, isSelf = false
     <div className="flex flex-col items-center gap-[6px] shrink-0">
       <div className="relative">
         <button onClick={onClick} className="active:opacity-80" aria-label={label}>
-          <div className={`w-[66px] h-[66px] rounded-full p-[2px] ${hasStory && !viewed ? "story-gradient" : "bg-ig-border"}`}>
+          <div className={`w-[66px] h-[66px] rounded-full p-[2px] ${hasStory && !viewed ? "story-gradient story-ring-glow" : "bg-ig-border"}`}>
             <div className="w-full h-full rounded-full bg-ig-surface p-[2px]">
               <img src={pic || FALLBACK} alt={label} className="w-full h-full rounded-full object-cover" />
             </div>
@@ -62,10 +62,10 @@ export default function Stories() {
 
   return (
     <>
-      <div className="bg-ig-surface border-b border-ig-border md:border md:rounded-sm md:mb-6 relative">
-        {canL && <button onClick={() => scrollRef.current?.scrollBy({ left: -300, behavior: "smooth" })} className="hidden md:flex absolute left-1 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-ig-surface border border-ig-border items-center justify-center"><ChevronLeft size={16} className="text-ig-text" /></button>}
-        {canR && <button onClick={() => scrollRef.current?.scrollBy({ left: 300, behavior: "smooth" })} className="hidden md:flex absolute right-1 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-ig-surface border border-ig-border items-center justify-center"><ChevronRight size={16} className="text-ig-text" /></button>}
-        <div ref={scrollRef} className="flex gap-4 px-4 py-3 overflow-x-auto scrollbar-hide scroll-smooth">
+      <div className="bg-ig-surface border-b border-ig-border md:border md:rounded-2xl md:mb-6 md:shadow-[var(--ig-shadow-sm)] relative ig-fade-in">
+        {canL && <button onClick={() => scrollRef.current?.scrollBy({ left: -300, behavior: "smooth" })} className="hidden md:flex absolute left-1 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-ig-surface/90 backdrop-blur shadow-md border border-ig-border items-center justify-center hover:scale-110 transition-transform"><ChevronLeft size={16} className="text-ig-text" /></button>}
+        {canR && <button onClick={() => scrollRef.current?.scrollBy({ left: 300, behavior: "smooth" })} className="hidden md:flex absolute right-1 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-ig-surface/90 backdrop-blur shadow-md border border-ig-border items-center justify-center hover:scale-110 transition-transform"><ChevronRight size={16} className="text-ig-text" /></button>}
+        <div ref={scrollRef} className="flex gap-4 px-4 py-4 overflow-x-auto scrollbar-hide scroll-smooth">
           <StoryRing pic={me?.profilePicture} label={t("story.yourStory")} isSelf hasStory={!!mine} viewed={false}
             onClick={() => (mine ? setViewerIndex(0) : setOpenCreate(true))} onAdd={() => setOpenCreate(true)} />
           {others.map((g, i) => (

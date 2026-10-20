@@ -53,7 +53,7 @@ export default function ScheduledPage() {
             </div>
           </Card>
         ))}
-        {!items.length && <EmptyState icon="🗓️" title={t("common.none")} />}
+        {!items.length && <EmptyState icon="🗓️" title={t("common.none")} text={t("empty.schedText")} />}
       </div>
       {edit && (
         <div className="fixed inset-0 z-[100] ig-backdrop flex items-center justify-center p-4">

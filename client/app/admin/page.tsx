@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import { Users, UserCheck, Image as ImageIcon, CalendarClock, CircleDashed, MessageCircle, Flag, Crown, IndianRupee, ShieldAlert } from "lucide-react";
+import { HBars, Donut } from "@/components/insta/Charts";
 import PageShell, { Card, StatCard, Skeleton, inputCls, btnCls, btn2Cls } from "@/components/insta/PageShell";
 import axiosInstance from "@/lib/axios";
 import useAuthStore from "@/store/authStore";
@@ -86,11 +88,23 @@ function Overview() {
   const [s, setS] = useState<any>(null);
   useEffect(() => { axiosInstance.get("/api/admin/stats").then((r) => setS(r.data.stats)).catch(() => {}); }, []);
   if (!s) return <div className="grid grid-cols-2 md:grid-cols-5 gap-3">{Array.from({ length: 10 }).map((_, i) => <Skeleton key={i} className="h-24" />)}</div>;
+  const I = [Users, UserCheck, ImageIcon, CalendarClock, CircleDashed, MessageCircle, Flag, Crown, IndianRupee, ShieldAlert];
   const items: [string, any][] = [[t("admin.users"), s.users], [t("admin.activeUsers"), s.activeUsers], [t("admin.posts"), s.posts], [t("admin.scheduled"), s.scheduled], [t("admin.activeStories"), s.activeStories], [t("admin.comments"), s.comments], [t("admin.openReports"), s.openReports], [t("admin.activeSubs"), s.activeSubscriptions], [t("admin.revenue"), `₹${s.revenue}`], [t("admin.failedLogins"), s.failedLogins7d]];
+  const dist = Object.entries(s.planDistribution || {}).map(([k, v]) => ({ label: tv(t, k), value: Number(v) }));
+  const totalU = Math.max(1, s.users), paid = dist.filter((d) => !/free|gratis|grátis|免费|gratuit|मुफ़्त/i.test(d.label)).reduce((a, d) => a + d.value, 0);
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3" data-testid="admin-stats">{items.map(([k, v]) => <StatCard key={k} label={k} value={v} accent={String(k) === t("admin.revenue")} />)}</div>
-      <Card><h3 className="font-semibold text-ig-text mb-2">{t("admin.planDist")}</h3><div className="flex gap-4 text-sm text-ig-text">{Object.entries(s.planDistribution).map(([k, v]) => <span key={k}>{k}: <b>{String(v)}</b></span>)}</div></Card>
+    <div className="space-y-5">
+      <div className="relative overflow-hidden rounded-[20px] ig-grad-anim p-5 md:p-7 text-white shadow-[0_20px_50px_-20px_rgba(150,47,191,.6)]">
+        <div className="absolute -right-10 -top-16 w-56 h-56 rounded-full bg-white/15 blur-2xl" />
+        <p className="text-xs uppercase tracking-[.2em] text-white/75 font-semibold relative">{t("admin.overview")}</p>
+        <p className="text-3xl md:text-4xl font-extrabold tracking-tight mt-1 relative">₹{s.revenue}</p>
+        <p className="text-sm text-white/85 relative">{t("admin.revenue")} · {t("admin.heroText")}</p>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 ig-stagger" data-testid="admin-stats">{items.map(([k, v], i) => { const Ic = I[i]; return <StatCard key={k} label={k} value={v} icon={<Ic size={16} />} accent={i === 8} trend={i === 1 ? Math.round((s.activeUsers / totalU) * 100) : undefined} />; })}</div>
+      <div className="grid md:grid-cols-3 gap-4">
+        <Card className="md:col-span-2"><h3 className="font-semibold text-ig-text mb-4">{t("admin.planDist")}</h3><HBars items={dist} /></Card>
+        <Card><h3 className="font-semibold text-ig-text mb-3">{t("admin.activeSubs")}</h3><Donut value={(paid / totalU) * 100} label={`${paid} / ${s.users}`} /></Card>
+      </div>
     </div>
   );
 }

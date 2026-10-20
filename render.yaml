@@ -15,6 +15,8 @@ services:
         value: Asia/Kolkata            # "server time" for the 10:00–13:00 mobile-login window
       - key: SEED_ON_START             # creates/promotes the admin account on boot
         value: "true"
+      - key: SEED_DEMO                 # demo users/posts/stories so the app looks alive
+        value: "true"
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_REFRESH_SECRET

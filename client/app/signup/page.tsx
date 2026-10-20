@@ -98,12 +98,12 @@ const PAGE = () => {
     formData.password;
 
   return (
-    <div className="min-h-screen bg-ig-bg flex flex-col items-center justify-center px-4 py-8">
+    <div className="min-h-screen ig-mesh flex flex-col items-center justify-center px-4 py-8"><div className="ig-mesh-orb" />
       <div className="w-full max-w-[350px] flex flex-col gap-3">
         {/* Main card */}
-        <div className="ig-card ig-fade-in px-8 sm:px-10 pt-10 pb-6">
+        <div className="ig-glass ig-fade-in relative z-10 px-8 sm:px-10 pt-10 pb-6">
           {/* Logo */}
-          <h1 className="instagram-font text-[38px] text-center text-ig-text mb-4 leading-none">
+          <h1 className="instagram-font text-[42px] text-center ig-grad-text mb-4 leading-none">
             Instagram
           </h1>
 
@@ -299,7 +299,7 @@ const PAGE = () => {
         </div>
 
         {/* Log in card */}
-        <div className="ig-card py-4 text-center">
+        <div className="ig-glass !rounded-2xl relative z-10 py-4 text-center">
           <p className="text-sm text-ig-text">
             {t("auth.haveAccount")}{" "}
             <Link
@@ -358,7 +358,7 @@ const PAGE = () => {
       </div>
 
       {/* Footer */}
-      <footer className="py-6 text-center">
+      <footer className="py-6 text-center relative z-10">
         <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 mb-2">
           {[
             "Meta",

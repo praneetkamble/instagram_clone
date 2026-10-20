@@ -104,7 +104,7 @@ const Sidebar = () => {
           <Link
             key={label}
             href={href}
-            className={`flex items-center gap-4 px-3 py-3 rounded-lg hover:bg-ig-hover transition-all hover:translate-x-0.5 ${isActive(href) ? "font-bold bg-ig-hover" : ""}`}
+            className={`ig-nav-item flex items-center gap-4 px-3 py-3 rounded-xl hover:bg-ig-hover transition-all ${isActive(href) ? "is-active font-bold" : ""}`}
           >
             <div className="relative shrink-0">
               <Icon
@@ -129,7 +129,7 @@ const Sidebar = () => {
         {/* Create — opens modal */}
         <button
           onClick={openCreate}
-          className="flex items-center gap-4 px-3 py-3 rounded-lg hover:bg-ig-hover transition-colors w-full"
+          className="ig-nav-item flex items-center gap-4 px-3 py-3 rounded-xl hover:bg-ig-hover transition-colors w-full"
         >
           <PlusSquare
             size={24}
@@ -144,7 +144,7 @@ const Sidebar = () => {
         {/* Profile */}
         <Link
           href="/profile"
-          className={`flex items-center gap-4 px-3 py-3 rounded-lg hover:bg-ig-hover transition-all ${isActive("/profile") ? "font-bold bg-ig-hover" : ""}`}
+          className={`ig-nav-item flex items-center gap-4 px-3 py-3 rounded-xl hover:bg-ig-hover transition-all ${isActive("/profile") ? "is-active font-bold" : ""}`}
         >
           <div className="w-6 h-6 rounded-full overflow-hidden shrink-0">
             <img
@@ -200,7 +200,7 @@ const Sidebar = () => {
         )}
         <button
           onClick={() => setMoreOpen(!moreOpen)}
-          className="flex items-center gap-4 px-3 py-3 rounded-lg hover:bg-ig-hover transition-colors w-full"
+          className="ig-nav-item flex items-center gap-4 px-3 py-3 rounded-xl hover:bg-ig-hover transition-colors w-full"
         >
           <Menu size={24} strokeWidth={1.5} className="text-ig-text shrink-0" />
           <span className="hidden xl:block text-[15px] text-ig-text">{t("nav.more")}</span>

@@ -1,7 +1,9 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import PageShell, { Card, StatCard, Skeleton } from "@/components/insta/PageShell";
+import PageShell, { Card, StatCard, Skeleton, EmptyState } from "@/components/insta/PageShell";
+import { AreaChart, Donut, HBars } from "@/components/insta/Charts";
+import { Eye, Users, Heart, MessageCircle, CheckCircle2 } from "lucide-react";
 import axiosInstance from "@/lib/axios";
 import { socket } from "@/lib/socket";
 import { useI18n, errorText } from "@/lib/i18n";
@@ -24,51 +26,48 @@ export default function StoryAnalyticsPage() {
     return () => { socket.off("story:analytics", h); };
   }, [id, load]);
   if (err) return <PageShell><p className="text-[#ed4956]">{err}</p></PageShell>;
-  if (!data) return <PageShell wide><Skeleton className="h-8 w-48 mb-6" /><div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">{[0,1,2,3,4].map((i) => <Skeleton key={i} className="h-24" />)}</div><Skeleton className="h-48" /></PageShell>;
+  if (!data) return <PageShell wide><Skeleton className="h-8 w-48 mb-6" /><div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6 ig-stagger">{[0,1,2,3,4].map((i) => <Skeleton key={i} className="h-24" />)}</div><Skeleton className="h-48" /></PageShell>;
   const { totals, story, viewers, reactions, replies, timeline } = data;
   const max = Math.max(1, ...timeline.map((x: any) => x.totalViews));
-  const stat = (label: string, value: any, testid: string) => (
-    <StatCard label={label} value={value} testid={testid} accent highlight={flash} />
+  const stat = (label: string, value: any, testid: string, icon?: any) => (
+    <StatCard label={label} value={value} testid={testid} icon={icon} accent highlight={flash} />
   );
   return (
     <PageShell title={t("analytics.title")} wide>
       <div className="flex gap-4 items-start mb-4">
-        {story.media[0]?.type === "video" ? <video src={story.media[0].url} className="w-24 h-40 object-cover rounded" muted /> : <img src={story.media[0]?.url} className="w-24 h-40 object-cover rounded" alt="" />}
+        {story.media[0]?.type === "video" ? <video src={story.media[0].url} className="w-24 h-40 object-cover rounded" muted /> : <div className="story-gradient story-ring-glow p-[3px] rounded-2xl shrink-0"><img src={story.media[0]?.url} className="w-24 h-40 object-cover rounded-[13px] border-2 border-ig-surface" alt="" /></div>}
         <div className="text-sm text-ig-text space-y-1">
           <p>{fmtDate(story.createdAt)} · {story.media.length} media · {story.privacy === "close_friends" ? t("story.closeFriends") : story.privacy === "followers" ? t("story.followers") : t("story.public")}</p>
           <p className={story.isArchived ? "text-ig-muted" : "text-green-600"}>{story.isArchived ? t("story.archived") : t("story.active")}</p>
           <p className="text-xs text-green-600 flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse" /> {t("analytics.live")}</p>
         </div>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
-        {stat(t("analytics.totalViews"), totals.viewsCount, "total-views")}
-        {stat(t("analytics.uniqueViewers"), totals.uniqueViewers, "unique-viewers")}
-        {stat(t("analytics.reactions"), totals.reactionsCount, "reactions")}
-        {stat(t("analytics.replies"), totals.repliesCount, "replies")}
-        {stat(t("analytics.completion"), `${totals.completionRate}%`, "completion")}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6 ig-stagger">
+        {stat(t("analytics.totalViews"), totals.viewsCount, "total-views", <Eye size={16} />)}
+        {stat(t("analytics.uniqueViewers"), totals.uniqueViewers, "unique-viewers", <Users size={16} />)}
+        {stat(t("analytics.reactions"), totals.reactionsCount, "reactions", <Heart size={16} />)}
+        {stat(t("analytics.replies"), totals.repliesCount, "replies", <MessageCircle size={16} />)}
+        {stat(t("analytics.completion"), `${totals.completionRate}%`, "completion", <CheckCircle2 size={16} />)}
       </div>
-      <Card className="mb-6">
-        <h2 className="font-semibold text-ig-text mb-3">{t("analytics.timeline")}</h2>
-        {timeline.length === 0 ? <p className="text-sm text-ig-muted">{t("common.none")}</p> : (
-          <div className="flex items-end gap-1 h-40 overflow-x-auto">
-            {timeline.map((p: any) => (
-              <div key={p.time} className="flex flex-col items-center justify-end min-w-[38px] h-full" title={`${p.time}: ${p.totalViews}`}>
-                <span className="text-[10px] text-ig-muted">{p.totalViews}</span>
-                <div className="w-6 rounded-t-md ig-grad shadow-sm transition-all duration-500 hover:brightness-110" style={{ height: `${(p.totalViews / max) * 100}%` }} />
-                <span className="text-[10px] text-ig-muted mt-1">{p.time.slice(11)}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
+      <div className="grid lg:grid-cols-3 gap-4 mb-6">
+        <Card className="lg:col-span-2">
+          <h2 className="font-semibold text-ig-text mb-3">{t("analytics.timeline")}</h2>
+          {timeline.length === 0 ? <EmptyState icon={<Eye size={24} />} title={t("common.none")} /> : <AreaChart data={timeline.map((p: any) => ({ label: p.time.slice(11), value: p.totalViews }))} />}
+        </Card>
+        <Card className="flex flex-col">
+          <h2 className="font-semibold text-ig-text mb-3">{t("analytics.engagement")}</h2>
+          <Donut value={totals.completionRate} label={t("analytics.completionDonut")} />
+          <div className="mt-5"><HBars items={[{ label: t("analytics.uniqueViewers"), value: totals.uniqueViewers }, { label: t("analytics.reactions"), value: totals.reactionsCount }, { label: t("analytics.replies"), value: totals.repliesCount }]} /></div>
+        </Card>
+      </div>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card>
           <h2 className="font-semibold text-ig-text mb-2">{t("analytics.viewers")} ({totals.uniqueViewers})</h2>
           <ul className="space-y-2 max-h-96 overflow-auto">
             {viewers.map((v: any) => (
-              <li key={v._id} className="flex items-center gap-2 text-sm text-ig-text">
-                <img src={v.viewer?.profilePicture || "/globe.svg"} className="w-7 h-7 rounded-full object-cover" alt="" />
-                <span className="font-medium">{v.viewer?.username}</span>
+              <li key={v._id} className="flex items-center gap-2 text-sm text-ig-text p-1.5 -mx-1.5 rounded-lg hover:bg-ig-hover transition-colors">
+                <img src={v.viewer?.profilePicture || "/globe.svg"} className="w-8 h-8 rounded-full object-cover ring-2 ring-[#d62976]/30" alt="" />
+                <span className="font-medium truncate">{v.viewer?.username}</span>
                 <span className="text-xs text-ig-muted ml-auto">{fmtDate(v.firstViewedAt, { timeStyle: "short" })}{v.completed ? ` · ✓ ${t("analytics.completed")}` : ""}</span>
               </li>
             ))}
@@ -77,11 +76,11 @@ export default function StoryAnalyticsPage() {
         </Card>
         <Card>
           <h2 className="font-semibold text-ig-text mb-2">{t("analytics.reactions")}</h2>
-          <ul className="space-y-2 max-h-96 overflow-auto">{reactions.map((r: any) => <li key={r._id} className="text-sm text-ig-text flex gap-2"><span className="text-lg">{r.emoji}</span>{r.user?.username}</li>)}</ul>
+          <ul className="space-y-2 max-h-96 overflow-auto">{reactions.map((r: any) => <li key={r._id} className="text-sm text-ig-text flex items-center gap-2 p-1.5 -mx-1.5 rounded-lg hover:bg-ig-hover"><span className="text-xl w-9 h-9 rounded-full bg-ig-hover flex items-center justify-center">{r.emoji}</span>{r.user?.username}</li>)}</ul>
         </Card>
         <Card>
           <h2 className="font-semibold text-ig-text mb-2">{t("analytics.replies")}</h2>
-          <ul className="space-y-2 max-h-96 overflow-auto">{replies.map((r: any) => <li key={r._id} className="text-sm text-ig-text"><b>{r.user?.username}</b> {r.text} {r.sentToDM && <span className="text-[10px] text-ig-muted">({t("analytics.dm")})</span>}</li>)}</ul>
+          <ul className="space-y-2 max-h-96 overflow-auto">{replies.map((r: any) => <li key={r._id} className="text-sm text-ig-text bg-ig-hover rounded-2xl rounded-tl-sm px-3 py-2"><b>{r.user?.username}</b> {r.text} {r.sentToDM && <span className="text-[10px] text-ig-muted">({t("analytics.dm")})</span>}</li>)}</ul>
         </Card>
       </div>
     </PageShell>

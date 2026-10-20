@@ -7,6 +7,7 @@ export async function seed() {
   let u = await User.findOne({ email: ADMIN.email });
   if (!u) u = await User.create({ username: ADMIN.username, fullName: "Platform Admin", email: ADMIN.email, password: await bcrypt.hash(ADMIN.password, 10), role: "admin", isVerified: true, phone: "+910000000000" });
   else { u.role = "admin"; await u.save(); }
+  if (process.env.SEED_DEMO === "true") { const { seedDemo } = await import("./seedDemo.js"); await seedDemo(u); }
   console.log(`✅ Admin ready: ${ADMIN.email} / ${ADMIN.password}`);
   return u;
 }

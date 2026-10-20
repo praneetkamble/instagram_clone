@@ -59,7 +59,7 @@ export default function ArchivePage() {
           </div>
         ))}
       </div>
-      {!stories.length && <EmptyState icon="📚" title={t("common.none")} />}
+      {!stories.length && <EmptyState icon="📚" title={t("common.none")} text={t("empty.archiveText")} />}
     </PageShell>
   );
 }

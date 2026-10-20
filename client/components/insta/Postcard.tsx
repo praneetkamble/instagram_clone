@@ -25,6 +25,7 @@ const Postcard = ({ post }: any) => {
   const [likeCount, setLikeCount] = useState(post.likes.length);
   const [saved, setSaved] = useState(false);
   const [showHeart, setShowHeart] = useState(false);
+  const [pop, setPop] = useState(0);
   const [commentText, setCommentText] = useState("");
   const [showAllComments, setShowAllComments] = useState(false);
   const [captionExpanded, setCaptionExpanded] = useState(false);
@@ -52,7 +53,7 @@ const Postcard = ({ post }: any) => {
         setLikeCount((prev: number) => prev - 1);
       } else {
         await axiosInstance.post(`/api/likes/${post._id}`);
-        setLiked(true);
+        setLiked(true); setPop((p) => p + 1);
         setLikeCount((prev: number) => prev + 1);
       }
     } catch (error) {
@@ -74,8 +75,9 @@ const Postcard = ({ post }: any) => {
           setLikeCount((c: any) => c + 1);
         } catch (error) {}
       }
-      setShowHeart(true);
-      setTimeout(() => setShowHeart(false), 1000);
+      setShowHeart(false); requestAnimationFrame(() => setShowHeart(true));
+      setPop((p) => p + 1);
+      setTimeout(() => setShowHeart(false), 900);
     }
     lastTapRef.current = now;
   };
@@ -146,25 +148,24 @@ const Postcard = ({ post }: any) => {
       </div>
       {/* Image */}
       <div
-        className="relative bg-black cursor-pointer select-none"
+        className="relative bg-black cursor-pointer select-none overflow-hidden md:mx-3 md:rounded-xl"
         onClick={handleDoubleTap}
       >
         <img
           src={post.media[0].url}
           alt="post"
-          className="w-full object-cover max-h-[600px]"
+          className="w-full object-cover max-h-[600px] transition-transform duration-700 hover:scale-[1.015]"
           draggable={false}
         />
         {/* Double-tap heart */}
         <div
-          className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-all duration-300 ${
-            showHeart ? "opacity-100 scale-100" : "opacity-0 scale-75"
-          }`}
+          className="absolute inset-0 flex items-center justify-center pointer-events-none"
         >
-          <Heart
-            size={90}
-            className="text-red-500 fill-red-500 drop-shadow-lg"
-          />
+          {showHeart && <>
+            <Heart size={110} className="ig-heart-burst text-white fill-[url(#igHeartGrad)]" strokeWidth={0} />
+            {[[-70,-60],[70,-60],[-90,10],[90,10],[-40,70],[40,70]].map(([dx,dy],i) => <span key={i} className="ig-sparkle" style={{ ["--dx" as any]: `${dx}px`, ["--dy" as any]: `${dy}px`, animationDelay: `${0.1 + i * 0.02}s` }} />)}
+          </>}
+          <svg width="0" height="0" className="absolute"><defs><linearGradient id="igHeartGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#feda75" /><stop offset="35%" stopColor="#fa7e1e" /><stop offset="65%" stopColor="#d62976" /><stop offset="100%" stopColor="#962fbf" /></linearGradient></defs></svg>
         </div>
       </div>
       <div className="px-4 pt-3 pb-1">
@@ -175,10 +176,11 @@ const Postcard = ({ post }: any) => {
               className="hover:opacity-60 transition-all active:scale-125 duration-150"
             >
               <Heart
+                key={pop}
                 size={24}
                 strokeWidth={1.5}
                 className={`transition-colors duration-200 ${
-                  liked ? "fill-[#ed4956] text-[#ed4956]" : "text-ig-text"
+                  liked ? "fill-[#ed4956] text-[#ed4956] ig-like-pop" : "text-ig-text"
                 }`}
               />
             </button>

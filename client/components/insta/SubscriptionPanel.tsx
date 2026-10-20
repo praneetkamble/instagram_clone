@@ -73,26 +73,38 @@ export default function SubscriptionPanel() {
   const cur = info.current.plan;
   const open = info.paymentWindow.open;
   return (
-    <div className="space-y-4" data-testid="subscription-panel">
-      <div className={`rounded-lg p-3 text-sm ${open ? "bg-green-500/10 text-green-700 dark:text-green-400" : "bg-orange-500/10 text-orange-700 dark:text-orange-400"}`} data-testid="payment-window">
-        {open ? t("sub.windowOpen") : t("sub.windowClosed")}
+    <div className="space-y-5" data-testid="subscription-panel">
+      <div className="relative overflow-hidden rounded-[20px] ig-grad-anim p-6 md:p-8 text-white shadow-[0_20px_50px_-20px_rgba(214,41,118,.6)]">
+        <div className="absolute -right-10 -top-10 w-48 h-48 rounded-full bg-white/15 blur-2xl" />
+        <div className="absolute right-6 bottom-4 text-6xl opacity-25 select-none hidden sm:block">✦</div>
+        <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight relative">{t("sub.heroTitle")}</h2>
+        <p className="text-sm md:text-base text-white/85 mt-1.5 max-w-lg relative">{t("sub.heroText")}</p>
+      </div>
+      <div className={`rounded-xl px-4 py-3 text-sm font-medium flex items-center gap-2 ${open ? "bg-green-500/10 text-green-700 dark:text-green-400" : "bg-orange-500/10 text-orange-700 dark:text-orange-400"}`} data-testid="payment-window">
+        <span className={`w-2 h-2 rounded-full ${open ? "bg-green-500 animate-pulse" : "bg-orange-500"}`} />{open ? t("sub.windowOpen") : t("sub.windowClosed")}
       </div>
       <p className="text-sm text-ig-text">{t("create.quota", { used: info.quota.used, limit: info.quota.limit ?? t("create.unlimited"), plan: planName(cur) })}{info.current.expiresAt && cur !== "free" ? ` · ${t("sub.validUntil", { date: fmtDate(info.current.expiresAt) })}` : ""}</p>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-3">
-        {info.plans.map((p: any) => (
-          <div key={p.id} className={`relative rounded-[16px] ${p.id === "gold" ? "ig-grad p-[2px] shadow-[0_12px_32px_-12px_rgba(220,39,67,.55)] lg:-translate-y-1" : ""}`}>
-          {p.id === "gold" && <span className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 ig-grad text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow">★ {p.name}</span>}
-          <div className={`ig-card ig-card-hover h-full p-5 flex flex-col ${p.id === "gold" ? "!border-transparent !rounded-[14px]" : ""} ${cur === p.id ? "ring-2 ring-[#0095f6]" : ""}`}>
-            <h3 className="font-semibold text-ig-text flex items-center gap-2">{p.name}{cur === p.id && <span className="text-[10px] font-semibold text-[#0095f6] bg-[#0095f6]/10 px-2 py-0.5 rounded-full">{t("sub.currentPlan")}</span>}</h3>
-            <p className={`text-3xl font-extrabold tracking-tight mt-2 ${p.id === "gold" ? "ig-grad-text" : "text-ig-text"}`}>₹{p.price}<span className="text-xs font-normal text-ig-muted">{p.price ? t("sub.perMonth") : ""}</span></p>
-            <p className="text-sm text-ig-muted mb-4 flex-1">✓ {p.postLimit ? t("sub.posts", { count: p.postLimit }) : t("sub.unlimitedPosts")}</p>
-            {p.id === "free" ? null : (
-              <button className={(cur === p.id ? btn2Cls : p.id === "gold" ? btnGradCls : btnCls) + " w-full"} disabled={!open || busy === p.id} title={!open ? t("sub.windowClosed") : ""} onClick={() => buy(p.id)}>
-                {cur === p.id ? t("sub.renew") : t("sub.choose", { plan: p.name })}
-              </button>
-            )}
-          </div></div>
-        ))}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 pt-4 ig-stagger">
+        {info.plans.map((p: any, idx: number) => {
+          const gold = p.id === "gold";
+          const feats: [string, boolean][] = [[p.postLimit ? t("sub.posts", { count: p.postLimit }) : t("sub.unlimitedPosts"), true], [t("sub.f.stories"), true], [t("sub.f.schedule"), idx >= 1], [t("sub.f.analytics"), idx >= 2], [t("sub.f.priority"), gold], [t("sub.f.badge"), gold]];
+          return (
+          <div key={p.id} className={`relative rounded-[18px] transition-transform duration-300 hover:-translate-y-1.5 ${gold ? "ig-border-anim lg:-translate-y-2 lg:hover:-translate-y-3.5" : ""}`} data-plan={p.id}>
+            {gold && <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10 ig-grad-anim text-white text-[10px] font-bold uppercase tracking-wider px-3.5 py-1 rounded-full shadow-lg whitespace-nowrap">★ {t("sub.mostPopular")}</span>}
+            <div className={`ig-card h-full p-5 flex flex-col !rounded-[18px] ${gold ? "!border-transparent" : ""} ${cur === p.id ? "ring-2 ring-[#0095f6]" : ""}`}>
+              <h3 className="font-semibold text-ig-text flex items-center gap-2 flex-wrap">{p.name}{cur === p.id && <span className="text-[10px] font-semibold text-[#0095f6] bg-[#0095f6]/10 px-2 py-0.5 rounded-full">{t("sub.currentPlan")}</span>}</h3>
+              <p className={`text-4xl font-extrabold tracking-tight mt-3 ${gold ? "ig-grad-text" : "text-ig-text"}`}>₹{p.price}<span className="text-xs font-medium text-ig-muted">{p.price ? t("sub.perMonth") : ""}</span></p>
+              <ul className="mt-4 mb-5 space-y-2 flex-1">
+                {feats.map(([f, ok]) => <li key={f} className={`flex items-center gap-2 text-[13px] ${ok ? "text-ig-text" : "text-ig-muted line-through opacity-60"}`}><span className={`w-[18px] h-[18px] shrink-0 rounded-full flex items-center justify-center text-[10px] font-bold ${ok ? (gold ? "ig-grad text-white" : "bg-[#0095f6]/12 text-[#0095f6]") : "bg-ig-hover text-ig-muted"}`}>{ok ? "✓" : "–"}</span>{f}</li>)}
+              </ul>
+              {p.id === "free" ? <div className="h-[38px]" /> : (
+                <button className={(cur === p.id ? btn2Cls : gold ? btnGradCls : btnCls) + " w-full !py-2.5"} disabled={!open || busy === p.id} title={!open ? t("sub.windowClosed") : ""} onClick={() => buy(p.id)}>
+                  {cur === p.id ? t("sub.renew") : t("sub.choose", { plan: p.name })}
+                </button>
+              )}
+            </div>
+          </div>);
+        })}
       </div>
       {info.current.subscription?.status === "active" && <button className="text-sm text-[#ed4956]" onClick={cancel}>{t("sub.cancel")}</button>}
       <Card>

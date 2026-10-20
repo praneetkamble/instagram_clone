@@ -12,7 +12,7 @@ export default function NotificationsPage() {
   return (
     <PageShell title={t("notif.title")}>
       <Card>
-        {!items.length && <EmptyState icon={<Bell size={26} />} title={t("notif.empty")} />}
+        {!items.length && <EmptyState icon={<Bell size={26} />} title={t("notif.empty")} text={t("empty.notifText")} />}
         <ul className="divide-y divide-ig-border">
           {items.map((n) => (
             <li key={n._id} className={`py-3 px-2 -mx-2 rounded-lg hover:bg-ig-hover transition-colors gap-3 text-sm text-ig-text flex justify-between ${n.read ? "" : "font-semibold"}`}>

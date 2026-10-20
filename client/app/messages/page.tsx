@@ -496,7 +496,7 @@ function ChatPanel({ conv, messages, user, setMessages, onBack }: any) {
             </div>
           )}
         </div>
-        <div className="flex-1 flex items-center bg-ig-hover rounded-full px-4 py-2 gap-2">
+        <div className="flex-1 min-w-0 flex items-center bg-ig-hover rounded-full px-4 py-2 gap-2">
           <input
             type="text"
             value={input}
@@ -522,7 +522,7 @@ function ChatPanel({ conv, messages, user, setMessages, onBack }: any) {
             onKeyDown={handleKeyDown}
             disabled={rewriting}
             placeholder={rewriting ? t("msg.rewriting") : t("msg.placeholder")}
-            className="flex-1 bg-transparent text-sm text-ig-text placeholder:text-ig-muted outline-none"
+            className="flex-1 min-w-0 w-0 bg-transparent text-sm text-ig-text placeholder:text-ig-muted outline-none"
           />
           {input.trim() ? (
             <button
