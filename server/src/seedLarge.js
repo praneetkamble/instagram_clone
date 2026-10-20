@@ -215,18 +215,27 @@ async function stepExtras() {
   // reports
   const posts = await Post.find({ user: { $in: ids }, status: "published" }).select("_id").limit(200).lean();
   await Report.insertMany(Array.from({ length: 25 }, () => ({ reporter: pick(allIds), targetType: "post", targetId: pick(posts)._id, reason: pick(["Spam","Misleading content","Copyright","Hate speech","Nudity"]), status: pick(["open","open","reviewing","resolved","dismissed"]), createdAt: ago(int(30, 60 * 24 * 20)) })));
-  // conversations + messages (incl. admin/demo inboxes)
-  let msgCount = 0;
-  const pairs = [...anc.flatMap((a) => sample(users, 6).map((u) => [a._id, u._id])), ...Array.from({ length: 60 }, () => sample(ids, 2))];
-  for (const [a, b] of pairs) {
-    const conv = await Conversation.create({ participants: [a, b] });
-    const n = int(3, 10); const start = int(60, 60 * 24 * 10);
-    const msgs = Array.from({ length: n }, (_, i) => ({ conversation: conv._id, sender: i % 2 ? b : a, text: pick(["Hey! 👋","Loved your last post","Where was that photo taken?","Let's catch up this weekend","Haha so true 😂","Sending you the details","Thanks a lot!","Can't wait 🎉","See you soon","That reel was 🔥"]), isSeen: i < n - 1 || rnd() < 0.5, createdAt: ago(start - i * int(1, 30)) }));
-    const saved = await Message.insertMany(msgs); msgCount += saved.length;
-    const last = saved[saved.length - 1];
-    await Conversation.updateOne({ _id: conv._id }, { lastMessage: last._id, lastMessageAt: last.createdAt });
-  }
-  return { stories: stories.length, views: views.length, subscriptions: subs.length, loginHistory: lh.length, audit: audits.length, messages: msgCount };
+  return { stories: stories.length, views: views.length, subscriptions: subs.length, loginHistory: lh.length, audit: audits.length };
 }
 
-export const STEPS = { users: stepUsers, posts: stepPosts, social: stepSocial, extras: stepExtras };
+async function stepMessages() {
+  const users = await bigUsers(); const anc = await anchors(); if (!users.length) return "need users";
+  const ids = users.map((u) => u._id);
+  if ((await Message.countDocuments({ sender: { $in: ids } })) >= 300) return "skip";
+  seedN = 5;
+  const empty = await Conversation.find({ lastMessage: null, participants: { $in: ids } }).select("_id").lean();
+  await Message.deleteMany({ conversation: { $in: empty.map((c) => c._id) } }); await Conversation.deleteMany({ _id: { $in: empty.map((c) => c._id) } });
+  const pairs = [...anc.flatMap((a) => sample(users, 6).map((u) => [a._id, u._id])), ...Array.from({ length: 60 }, () => sample(ids, 2))];
+  const convs = await Conversation.insertMany(pairs.map((p) => ({ participants: p })));
+  const msgs = [];
+  convs.forEach((conv, ci) => {
+    const [a, b] = pairs[ci]; const n = int(3, 10); const start = int(60 * 3, 60 * 24 * 10);
+    for (let i = 0; i < n; i++) msgs.push({ conversation: conv._id, sender: i % 2 ? b : a, text: pick(["Hey! 👋","Loved your last post","Where was that photo taken?","Let's catch up this weekend","Haha so true 😂","Sending you the details","Thanks a lot!","Can't wait 🎉","See you soon","That reel was 🔥"]), isSeen: i < n - 1 || rnd() < 0.5, createdAt: ago(start - i * 15) });
+  });
+  const saved = await Message.insertMany(msgs);
+  const last = {}; saved.forEach((m) => (last[m.conversation] = m));
+  await Conversation.bulkWrite(Object.values(last).map((m) => ({ updateOne: { filter: { _id: m.conversation }, update: { $set: { lastMessage: m._id, lastMessageAt: m.createdAt } } } })));
+  return { conversations: convs.length, messages: saved.length };
+}
+
+export const STEPS = { users: stepUsers, posts: stepPosts, social: stepSocial, extras: stepExtras, messages: stepMessages };
