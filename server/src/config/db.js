@@ -7,6 +7,9 @@ const connectDB = async () => {
   if (!g.__mongo.promise) {
     g.__mongo.promise = (async () => {
       let uri = process.env.MONGODB_URI || process.env.MONGO_URL;
+      // Atlas copy-paste URIs keep a "<db_password>" placeholder; fill it from a separate (secret) env var.
+      if (uri && process.env.MONGODB_DB_PASSWORD && /<db_password>|<password>/.test(uri))
+        uri = uri.replace(/<db_password>|<password>/g, encodeURIComponent(process.env.MONGODB_DB_PASSWORD));
       if (!uri || process.env.USE_MEMORY_DB === "true") {
         if (process.env.VERCEL) throw new Error("MONGODB_URI is required on Vercel");
         const { MongoMemoryServer } = await import("mongodb-memory-server");
