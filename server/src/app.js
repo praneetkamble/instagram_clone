@@ -12,6 +12,10 @@ import subscriptionRoutes from "./routes/subscription.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import uploadRoutes, { UPLOAD_DIR } from "./routes/upload.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
+import cronRoutes from "./routes/cron.routes.js";
+import seedRoutes from "./routes/seed.routes.js";
+import mediaRoutes from "./routes/media.routes.js";
+import lazyMaintenance from "./middleware/lazyMaintenance.js";
 dotenv.config();
 const app = express();
 app.set("trust proxy", Number(process.env.TRUST_PROXY ?? 1)); // Render/Vercel: one proxy hop
@@ -19,8 +23,12 @@ const origins = (process.env.CLIENT_URL || "http://localhost:3000,https://instag
 app.use(cors({ origin: origins, credentials: true }));
 app.use(express.json({ limit: "2mb", verify: (req, _res, buf) => { req.rawBody = buf.toString(); } }));
 app.use(express.urlencoded({ extended: true }));
-app.get("/api/health", (_req, res) => res.json({ ok: true, uptime: Math.round(process.uptime()) }));
-app.use("/uploads", express.static(UPLOAD_DIR, { maxAge: "7d" }));
+app.get("/api/health", (_req, res) => res.json({ ok: true, uptime: Math.round(process.uptime()), runtime: process.env.VERCEL ? "vercel" : "node", realtime: process.env.VERCEL ? "poll" : "socket+poll" }));
+app.use("/api/cron", cronRoutes);
+app.use("/api/admin/seed", seedRoutes);
+app.use("/api/media", mediaRoutes);
+app.use(lazyMaintenance);
+if (!process.env.VERCEL) app.use("/uploads", express.static(UPLOAD_DIR, { maxAge: "7d" }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/posts", postRoutes);

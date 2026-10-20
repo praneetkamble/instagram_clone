@@ -5,7 +5,7 @@ import PageShell, { Card, StatCard, Skeleton, EmptyState } from "@/components/in
 import { AreaChart, Donut, HBars } from "@/components/insta/Charts";
 import { Eye, Users, Heart, MessageCircle, CheckCircle2 } from "lucide-react";
 import axiosInstance from "@/lib/axios";
-import { socket } from "@/lib/socket";
+import { rtOn, usePoll, USE_SOCKETS } from "@/lib/realtime";
 import { useI18n, errorText } from "@/lib/i18n";
 
 export default function StoryAnalyticsPage() {
@@ -22,9 +22,16 @@ export default function StoryAnalyticsPage() {
   useEffect(() => { load(); }, [load]);
   useEffect(() => {
     const h = (e: any) => { if (e.storyId === id) { setData((d: any) => (d ? { ...d, totals: e.totals || d.totals } : d)); setFlash(true); setTimeout(() => setFlash(false), 800); load(); } };
-    socket.on("story:analytics", h);
-    return () => { socket.off("story:analytics", h); };
+    return rtOn("story:analytics", h);
   }, [id, load]);
+  // Polling fallback: refresh every 4s while visible; flash the KPI cards when totals change.
+  usePoll(async () => {
+    const r = await axiosInstance.get(`/api/stories/${id}/analytics?page=${page}`);
+    setData((d: any) => {
+      if (d && JSON.stringify(d.totals) !== JSON.stringify(r.data.totals)) { setFlash(true); setTimeout(() => setFlash(false), 800); }
+      return r.data;
+    });
+  }, 4000, !USE_SOCKETS);
   if (err) return <PageShell><p className="text-[#ed4956]">{err}</p></PageShell>;
   if (!data) return <PageShell wide><Skeleton className="h-8 w-48 mb-6" /><div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6 ig-stagger">{[0,1,2,3,4].map((i) => <Skeleton key={i} className="h-24" />)}</div><Skeleton className="h-48" /></PageShell>;
   const { totals, story, viewers, reactions, replies, timeline } = data;

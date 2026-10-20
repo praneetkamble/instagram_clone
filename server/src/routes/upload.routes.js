@@ -1,25 +1,23 @@
 import express from "express";
 import multer from "multer";
-import path from "path";
-import crypto from "crypto";
-import fs from "fs";
 import { protect } from "../middleware/auth.middleware.js";
-export const UPLOAD_DIR = path.resolve(process.env.UPLOAD_DIR || "uploads");
-fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-const storage = multer.diskStorage({
-  destination: UPLOAD_DIR,
-  filename: (_r, f, cb) => cb(null, `${Date.now()}-${crypto.randomBytes(6).toString("hex")}${path.extname(f.originalname).toLowerCase().replace(/[^.a-z0-9]/g, "")}`),
-});
+import { storeFile, signedUploadParams, storageInfo, UPLOAD_DIR } from "../services/storage.js";
+export { UPLOAD_DIR };
+// Vercel caps request bodies at 4.5 MB, so keep files in memory and hand them to the storage backend.
+const MAX = process.env.VERCEL ? 4.4 * 1024 * 1024 : Number(process.env.MAX_UPLOAD_MB || 50) * 1024 * 1024;
 const upload = multer({
-  storage, limits: { fileSize: Number(process.env.MAX_UPLOAD_MB || 50) * 1024 * 1024, files: 10 },
+  storage: multer.memoryStorage(), limits: { fileSize: MAX, files: 10 },
   fileFilter: (_r, f, cb) => cb(/^(image|video)\//.test(f.mimetype) ? null : new Error("Only images and videos are allowed"), /^(image|video)\//.test(f.mimetype)),
 });
 const r = express.Router();
+r.get("/config", protect, (_req, res) => res.json({ success: true, ...storageInfo() }));
+// Signed params for direct browser → Cloudinary upload (large videos). 404 when Cloudinary isn't configured.
+r.get("/sign", protect, (_req, res) => { const p = signedUploadParams(); return p ? res.json({ success: true, ...p }) : res.status(404).json({ success: false, code: "NO_DIRECT_UPLOAD" }); });
 r.post("/", protect, (req, res) => {
-  upload.array("files", 10)(req, res, (err) => {
-    if (err) return res.status(400).json({ success: false, code: "UPLOAD_FAILED", message: err.message });
-    const base = process.env.PUBLIC_URL || `${req.protocol}://${req.get("host")}`;
-    res.json({ success: true, files: (req.files || []).map((f) => ({ url: `${base}/uploads/${f.filename}`, type: f.mimetype.startsWith("video") ? "video" : "image", size: f.size })) });
+  upload.array("files", 10)(req, res, async (err) => {
+    if (err) return res.status(err.code === "LIMIT_FILE_SIZE" ? 413 : 400).json({ success: false, code: err.code === "LIMIT_FILE_SIZE" ? "FILE_TOO_LARGE" : "UPLOAD_FAILED", message: err.message });
+    try { res.json({ success: true, files: await Promise.all((req.files || []).map((f) => storeFile(f, req))) }); }
+    catch (e) { res.status(e.status || 502).json({ success: false, code: e.status === 413 ? "FILE_TOO_LARGE" : "UPLOAD_FAILED", message: e.message }); }
   });
 });
 export default r;

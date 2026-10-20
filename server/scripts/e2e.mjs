@@ -93,11 +93,17 @@ ok(r.stories?.length === 1, "non-follower sees only public story");
 r = await api("POST", `/api/stories/${s2._id}/view`, { token: carol.token, body: {} });
 ok(r.status === 403, "close friends privacy enforced");
 const events = [];
-const sock = io(BASE, { transports: ["websocket"] });
-await new Promise((res) => sock.on("connect", res));
-sock.emit("setup", alice._id);
-sock.on("story:analytics", (e) => events.push(e));
-await sleep(300);
+// Serverless (Vercel) mode has no Socket.io server: verify live analytics through polling instead.
+const SERVERLESS = (await api("GET", "/api/health")).runtime === "vercel";
+let sock = null, pollBefore = null;
+if (SERVERLESS) pollBefore = (await api("GET", `/api/stories/${s1._id}/analytics`, { token: alice.token })).totals;
+else {
+  sock = io(BASE, { transports: ["websocket"] });
+  await new Promise((res) => sock.on("connect", res));
+  sock.emit("setup", alice._id);
+  sock.on("story:analytics", (e) => events.push(e));
+  await sleep(300);
+}
 await api("POST", `/api/stories/${s1._id}/view`, { token: bob.token, body: { mediaIndex: 0 } });
 await api("POST", `/api/stories/${s1._id}/view`, { token: bob.token, body: { mediaIndex: 1, completed: true } });
 await Promise.all([1, 2, 3].map(() => api("POST", `/api/stories/${s1._id}/view`, { token: carol.token, body: { mediaIndex: 0 } })));
@@ -115,7 +121,8 @@ ok(an.totals?.reactionsCount === 1 && an.reactions?.[0]?.emoji === "😍", "reac
 ok(an.totals?.repliesCount === 2 && an.replies.length === 2, "replies counted");
 ok(an.totals?.completionRate === 50, "completion rate 50%", an.totals);
 ok(an.viewers?.length === 2 && an.timeline?.length >= 1, "viewer list + timeline");
-ok(events.some((e) => e.type === "view") && events.some((e) => e.type === "reaction") && events.some((e) => e.type === "reply"), "real-time socket analytics events", events.map((e) => e.type));
+if (SERVERLESS) ok(pollBefore && pollBefore.viewsCount === 0 && an.totals.viewsCount === 5 && an.totals.reactionsCount === 1 && an.totals.repliesCount === 2, "live analytics visible to polling clients (serverless mode)", { pollBefore, after: an.totals });
+else ok(events.some((e) => e.type === "view") && events.some((e) => e.type === "reaction") && events.some((e) => e.type === "reply"), "real-time socket analytics events", events.map((e) => e.type));
 r = await api("GET", `/api/stories/${s1._id}/analytics`, { token: bob.token });
 ok(r.status === 404, "analytics owner-only");
 r = await api("POST", "/api/stories/highlights", { token: alice.token, body: { title: "Trip", storyIds: [s1._id, s3._id] } });
@@ -127,7 +134,7 @@ r = await api("GET", "/api/stories/feed", { token: bob.token });
 ok(r.groups[0].stories.length === 2, "owner deleted story before expiry");
 r = await api("GET", "/api/stories/mine?scope=archived&includeDeleted=true", { token: alice.token });
 ok(r.items.some((s) => s._id === s3._id), "deleted story archived; analytics retained");
-sock.close();
+sock?.close();
 
 console.log("\n== 3. Subscriptions ==");
 const post = (t, extra = {}) => api("POST", "/api/posts", { token: t, body: { caption: "hello #sun", media: [{ url: "https://picsum.photos/600", type: "image" }], ...extra } });
@@ -185,7 +192,11 @@ r = await api("GET", "/api/posts/scheduled", { token: ct }); ok(r.items.length =
 console.log("  … waiting up to 130s for scheduler");
 let published = false;
 for (let i = 0; i < 26 && !published; i++) { await sleep(5000); r = await api("GET", "/api/posts", { token: bob.token }); published = r.posts.some((p) => p._id === sp1._id); }
-ok(published, "background scheduler published the post");
+ok(published, SERVERLESS ? "due post published lazily on read (no cron process)" : "background scheduler published the post");
+if (SERVERLESS) {
+  r = await api("GET", "/api/cron/tick"); ok(r.status === 401, "cron endpoint rejects missing secret");
+  if (process.env.CRON_SECRET) { r = await api("GET", `/api/cron/tick?key=${process.env.CRON_SECRET}`); ok(r.success && r.posts?.ok && r.stories?.ok && r.subs?.ok, "cron tick runs all jobs", r); }
+}
 ok(fs.readFileSync(LOG, "utf8").includes("Your scheduled post is live"), "publish email sent");
 r = await api("GET", "/api/admin/scheduled?status=published", { token: at }); ok(r.items.some((p) => p._id === sp1._id), "admin scheduled filter: Published");
 r = await api("GET", "/api/admin/scheduled?status=cancelled&q=edited", { token: at }); ok(r.items.length === 1, "admin scheduled filter: Cancelled + search");

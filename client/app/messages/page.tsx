@@ -11,6 +11,7 @@ import {
   mockConversations,
 } from "@/lib/mock-data";
 import { socket } from "@/lib/socket";
+import { rtEmit, rtOn, usePoll, USE_SOCKETS } from "@/lib/realtime";
 import useAuthStore from "@/store/authStore";
 import {
   Check,
@@ -71,10 +72,10 @@ const page = () => {
   };
   const openConversation = async (conversation: any) => {
     if (activeConversation) {
-      socket.emit("leave-conversation", activeConversation._id);
+      rtEmit("leave-conversation", activeConversation._id);
     }
 
-    socket.emit("join-conversation", conversation._id);
+    rtEmit("join-conversation", conversation._id);
 
     setActiveConversation(conversation);
     setShowChat(true);
@@ -91,7 +92,7 @@ const page = () => {
     const receiveMessage = (message: any) => {
       if (message.conversation !== activeConversation?._id) return;
 
-      setMessages((prev) => [...prev, message]);
+      setMessages((prev) => (prev.some((m) => m._id === message._id) ? prev : [...prev, message]));
     };
 
     socket.on("receive-message", receiveMessage);
@@ -118,6 +119,18 @@ const page = () => {
       socket.off("messages-seen", seenHandler);
     };
   }, [activeConversation]);
+
+  // Polling fallback (default on Vercel): refresh the open thread + seen state while the tab is visible.
+  usePoll(async () => {
+    if (!activeConversation) return;
+    const res = await axiosInstance.get(`/api/conversation/${activeConversation._id}/messages`);
+    const next = res.data.messages || [];
+    setMessages((prev) => {
+      const sig = (a: any[]) => a.map((m) => `${m._id}:${m.isSeen ? 1 : 0}`).join(",");
+      return sig(prev) === sig(next) ? prev : next;
+    });
+    if (next.some((m: any) => !m.isSeen && (m.sender?._id || m.sender) !== user?._id)) axiosInstance.put(`/api/conversation/${activeConversation._id}/seen`).catch(() => {});
+  }, 3000, !USE_SOCKETS && !!activeConversation);
 
   const filtered = conversations.filter((c: any) => {
     const other = c.participants.find((p: any) => p._id !== user._id);
@@ -312,11 +325,11 @@ function ChatPanel({ conv, messages, user, setMessages, onBack }: any) {
     try {
       setInput("");
 
-      await axiosInstance.post(`/api/conversation/${conv._id}/message`, {
+      const res = await axiosInstance.post(`/api/conversation/${conv._id}/message`, {
         text: input,
       });
-
-      // Socket will append it automatically
+      const m = res.data?.message;
+      if (m) setMessages((prev: any[]) => (prev.some((x) => x._id === m._id) ? prev : [...prev, m]));
     } catch (err) {
       console.log(err);
     }
@@ -503,7 +516,7 @@ function ChatPanel({ conv, messages, user, setMessages, onBack }: any) {
             onChange={(e) => {
               setInput(e.target.value);
 
-              socket.emit("typing", {
+              rtEmit("typing", {
                 conversationId: conv._id,
                 userId: user._id,
               });
@@ -513,7 +526,7 @@ function ChatPanel({ conv, messages, user, setMessages, onBack }: any) {
               }
 
               typingRef.current = setTimeout(() => {
-                socket.emit("stop-typing", {
+                rtEmit("stop-typing", {
                   conversationId: conv._id,
                   userId: user._id,
                 });

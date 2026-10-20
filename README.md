@@ -84,21 +84,28 @@ BASE=http://localhost:5000 LOG=/path/to/server.log node scripts/e2e.mjs   # 84 e
 ## Environment variables
 See `server/.env.example` and `client/.env.example`.
 
-## Deployment
+## Deployment — all on Vercel (free Hobby, no credit card)
 
-### API → Render
-1. Push the repo, then in Render choose **New → Blueprint** and select it (uses `render.yaml`), or create a *Web Service* with root `server`, build `npm ci`, start `npm start`.
-2. Set `MONGODB_URI` (MongoDB Atlas – the in-memory DB is dev-only), `CLIENT_URL` (your Vercel URL), `PUBLIC_URL` (the Render URL), `ADMIN_PASSWORD`, and the Razorpay / SMTP / SMS keys.
-3. `PORT` is supplied by Render; the server binds to it. `trust proxy` is on so login history records the real client IP from `X-Forwarded-For`. CORS + Socket.io allow the origins in `CLIENT_URL`.
-4. `TZ=Asia/Kolkata` makes the mobile-login window (10:00–13:00 server time) IST. The payment window is always computed in IST.
-5. Note: Render's free disk is ephemeral – uploaded media in `server/uploads` is wiped on redeploy. Attach a Render Disk mounted at `UPLOAD_DIR`, or move uploads to object storage, for permanent media.
+Two Vercel projects from this repo: **web** (root `client/`) and **api** (root `server/`).
 
-### Web → Vercel
-1. Import the repo, set **Root Directory = `client`** (framework auto-detected: Next.js).
-2. Env var: `NEXT_PUBLIC_BACKEND_URL=https://<your-render-service>.onrender.com` (also `BACKEND_URL`, same value).
-3. Deploy, then put the Vercel URL into the API's `CLIENT_URL`.
+How the API runs serverless:
+- `server/api/index.js` exports the Express app; `server/vercel.json` rewrites every path to it. No `app.listen`, Mongoose connection cached across invocations (`src/config/db.js`). `node src/server.js` still works locally (Socket.io + node-cron).
+- **Real-time** → client polling (messages 3 s, story insights 4 s, notification badge 15 s, only while the tab is visible). `NEXT_PUBLIC_REALTIME=socket` switches back to Socket.io when a long-running server exists.
+- **Cron** → `GET /api/cron/tick` (protected by `CRON_SECRET`) runs story archiving, due-post publishing (3 attempts, error log in `publishErrors` + `/api/cron/log`) and subscription expiry/reminders. The same work also runs lazily (throttled) on relevant reads, so nothing depends on the external pinger. A daily Vercel Cron is included as a backstop (Hobby allows only daily).
+- **Uploads** → Cloudinary (`CLOUDINARY_URL`, images+videos) › imgbb (`IMGBB_API_KEY`, images) › MongoDB fallback (≤ 4 MB, served from `/api/media/:id` with range support). Vercel limits request bodies to 4.5 MB; with Cloudinary set, bigger files (videos) go browser → Cloudinary directly via `/api/upload/sign`.
+- **Seeding** → `GET /api/admin/seed?key=SEED_SECRET` (admin `admin@instai.dev` / `Admin@12345` + demo data; `&demo=0` for admin only).
+- **IPs** for login history come from `x-vercel-forwarded-for` / `x-forwarded-for`.
 
-## Free backend hosting without a credit card (Railway)
+### Steps
+1. MongoDB Atlas M0 (free, no card): create cluster, DB user, Network Access `0.0.0.0/0`, copy the `mongodb+srv://…/instai` URI.
+2. `npm i -g vercel && vercel login`.
+3. API: `cd server && vercel link` (new project `instai-api`, root = `server`), add env vars (Production):
+   `MONGODB_URI, JWT_SECRET, JWT_REFRESH_SECRET, CLIENT_URL=https://<web>.vercel.app, CRON_SECRET, SEED_SECRET, APP_TZ=Asia/Kolkata, SEED_DEMO=true` (+ optional `CLOUDINARY_URL, IMGBB_API_KEY, SMTP_*, MAIL_FROM, RAZORPAY_*, GROQ_API, FAST2SMS_API_KEY/TWILIO_*`), then `vercel --prod`.
+4. Seed once: open `https://<api>.vercel.app/api/admin/seed?key=<SEED_SECRET>`.
+5. Web: `cd client && vercel link` (project `instai-web`, root = `client`), env `NEXT_PUBLIC_BACKEND_URL=https://<api>.vercel.app`, `vercel --prod`. Put the final web URL in the API's `CLIENT_URL` and redeploy the API.
+6. cron-job.org (free, no card): new job, URL `https://<api>.vercel.app/api/cron/tick?key=<CRON_SECRET>`, every 1 minute, GET. Check `https://<api>.vercel.app/api/health`.
+
+## Alternative: Docker host (Railway etc.)
 
 Render, Koyeb and Fly now ask for a card, and Hugging Face Docker Spaces need a paid PRO plan, so the backend ships with a root `Dockerfile` + `railway.json` for **Railway** (no card for Trial/Free; the service never sleeps, so Socket.io and the node-cron jobs keep running).
 

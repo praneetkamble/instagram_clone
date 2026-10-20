@@ -26,6 +26,8 @@ export function parseUA(ua = "") {
   return { browser, browserVersion, os, deviceType, isMobile: deviceType === "Mobile" || deviceType === "Tablet" };
 }
 export function clientIp(req) {
-  const fwd = req.headers["x-forwarded-for"];
+  // Vercel: x-vercel-forwarded-for / x-real-ip carry the real client; otherwise first x-forwarded-for hop.
+  const h = req.headers;
+  const fwd = h["x-vercel-forwarded-for"] || h["x-forwarded-for"] || h["x-real-ip"];
   return (fwd ? String(fwd).split(",")[0].trim() : req.socket?.remoteAddress || "").replace(/^::ffff:/, "");
 }

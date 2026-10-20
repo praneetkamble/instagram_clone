@@ -29,6 +29,7 @@ import { useCreateModal } from "@/lib/createmodelcontext";
 import axiosInstance from "@/lib/axios";
 import { toast } from "../ui/toast";
 import useAuthStore from "@/store/authStore";
+import { useUnreadNotifications } from "@/lib/realtime";
 const Sidebar = () => {
   const totalUnread = mockConversations.reduce((s, c) => s + c.unread, 0);
   const { theme, toggle } = useTheme();
@@ -37,6 +38,7 @@ const Sidebar = () => {
   const [moreOpen, setMoreOpen] = useState(false);
   const { open: openCreate } = useCreateModal();
   const { t } = useI18n();
+  const unreadNotifs = useUnreadNotifications();
   const me = useAuthStore((state: any) => state.user);
   const navItems = [
     { label: t("nav.home"), icon: Home, href: "/", badge: 0 },
@@ -49,7 +51,7 @@ const Sidebar = () => {
       href: "/messages",
       badge: totalUnread,
     },
-    { label: t("nav.notifications"), icon: Heart, href: "/notifications", badge: 0 },
+    { label: t("nav.notifications"), icon: Heart, href: "/notifications", badge: pathname === "/notifications" ? 0 : unreadNotifs },
   ];
   const logout = useAuthStore((state: any) => state.logout);
 

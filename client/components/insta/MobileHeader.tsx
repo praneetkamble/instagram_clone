@@ -4,8 +4,10 @@ import { mockConversations } from "@/lib/mock-data";
 import { useTheme } from "@/lib/theme-context";
 import { Heart, Moon, Settings, Sun } from "lucide-react";
 import Link from "next/link";
+import { useUnreadNotifications } from "@/lib/realtime";
 
 const MobileHeader = () => {
+  const unread = useUnreadNotifications();
   const totalUnread = mockConversations.reduce((s, c) => s + c.unread, 0);
   const { theme, toggle } = useTheme();
   return (
@@ -30,7 +32,7 @@ const MobileHeader = () => {
           <Settings size={22} strokeWidth={1.5} />
         </Link>
         <Link href="/notifications" aria-label="notifications" className="text-ig-text active:opacity-60 transition-opacity">
-          <Heart size={22} strokeWidth={1.5} />
+          <span className="relative block"><Heart size={22} strokeWidth={1.5} />{unread > 0 && <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 bg-[#ed4956] text-white text-[9px] font-bold rounded-full flex items-center justify-center">{unread}</span>}</span>
         </Link>
         <Link
           href="/messages"
