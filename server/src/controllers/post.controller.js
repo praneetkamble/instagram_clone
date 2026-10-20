@@ -49,6 +49,7 @@ export const getPosts = async (req, res) => {
   try {
     const page = Math.max(1, +req.query.page || 1), limit = Math.min(50, +req.query.limit || 30);
     const filter = { isDeleted: false, isArchived: { $ne: true }, ...PUBLISHED };
+    if (req.query.type === "video") filter["media.type"] = "video";
     const viewer = req.user?._id;
     let followingIds = [];
     if (viewer) followingIds = (await Follow.find({ follower: viewer }).select("following")).map((f) => f.following);

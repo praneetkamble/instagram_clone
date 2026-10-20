@@ -56,7 +56,10 @@ function Reel({ p, muted, setMuted }: any) {
 }
 
 export default function ReelsPage() {
-  const posts = useAllPosts(40);
+  const recent = useAllPosts(30);
+  const [videos, setVideos] = useState<any[] | null>(null);
+  useEffect(() => { axiosInstance.get("/api/posts?type=video&limit=30").then((r) => setVideos(r.data.posts || [])).catch(() => setVideos([])); }, []);
+  const posts = recent && videos ? [...videos, ...recent.filter((p) => !videos.some((v) => v._id === p._id))] : null;
   const [muted, setMuted] = useState(true);
   const reels = posts ? [...posts].sort((a, b) => (b.media?.[0]?.type === "video" ? 1 : 0) - (a.media?.[0]?.type === "video" ? 1 : 0)) : null;
   return (
