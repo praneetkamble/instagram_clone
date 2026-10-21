@@ -160,15 +160,9 @@ async function stepSocial() {
   return { follows: follows.length, likes: likes.length, comments: comments.length, notifications: notifs.length };
 }
 
-async function stepExtras() {
-  const users = await bigUsers(); const anc = await anchors(); if (!users.length) return "need users";
-  const ids = users.map((u) => u._id);
-  if ((await Story.countDocuments({ user: { $in: ids } })) >= 100) return "skip";
-  seedN = 4;
-  const all = [...users, ...anc]; const allIds = all.map((u) => u._id);
-  const admin = anc.find((a) => a.role === "admin");
+async function makeStories(users, allIds, count) {
   // stories with analytics
-  const sDocs = sample(users, 110).map((u, i) => {
+  const sDocs = sample(users, count).map((u, i) => {
     const created = ago(int(10, 60 * 22));
     const vid = rnd() < 0.1;
     return { user: u._id, media: Array.from({ length: int(1, 3) }, (_, m) => vid && m === 0 ? { url: pick(VIDEOS), type: "video", duration: 15 } : { url: img(`story-${u.username}-${i}-${m}`, 1080, 1920), type: "image", duration: 5 }), caption: rnd() < 0.4 ? pick(LINES) : "", privacy: pick(["public","public","public","followers","close_friends"]), expiresAt: new Date(+created + 24 * 3600e3), createdAt: created };
@@ -187,6 +181,17 @@ async function stepExtras() {
   const agg = (arr, f) => arr.reduce((m, x) => ((m[x.story] = f(m[x.story] || 0, x)), m), {});
   const vc = agg(views, (a, v) => a + v.viewCount), uv = agg(views, (a) => a + 1), cv = agg(views, (a, v) => a + (v.completed ? 1 : 0)), rc = agg(reacts, (a) => a + 1), rp = agg(replies, (a) => a + 1);
   await Story.bulkWrite(stories.map((s) => ({ updateOne: { filter: { _id: s._id }, update: { $set: { viewsCount: vc[s._id] || 0, uniqueViewers: uv[s._id] || 0, completedViews: cv[s._id] || 0, reactionsCount: rc[s._id] || 0, repliesCount: rp[s._id] || 0 } } } })));
+  return stories;
+}
+
+async function stepExtras() {
+  const users = await bigUsers(); const anc = await anchors(); if (!users.length) return "need users";
+  const ids = users.map((u) => u._id);
+  if ((await Story.countDocuments({ user: { $in: ids } })) >= 100) return "skip";
+  seedN = 4;
+  const all = [...users, ...anc]; const allIds = all.map((u) => u._id);
+  const admin = anc.find((a) => a.role === "admin");
+  const stories = await makeStories(users, allIds, 110);
   // payments / invoices (active for current paid users + history incl. failed/expired)
   const full = await User.find(BIG).select("_id plan planExpiresAt username").lean();
   const subs = [];
@@ -251,4 +256,14 @@ async function stepFixVideos() {
   return { fixed: n };
 }
 
-export const STEPS = { users: stepUsers, posts: stepPosts, social: stepSocial, extras: stepExtras, messages: stepMessages, fixvideos: stepFixVideos };
+// Stories expire after 24h; re-run this (or let /api/cron/tick do it) to keep the demo feed alive.
+export async function stepFreshStories() {
+  const users = await bigUsers(); const anc = await anchors(); if (!users.length) return "need users";
+  const active = await Story.countDocuments({ user: { $in: users.map((u) => u._id) }, isDeleted: false, isArchived: false, expiresAt: { $gt: new Date(Date.now() + 2 * 3600e3) } });
+  if (active >= 60) return { skipped: true, active };
+  seedN = Date.now() % 100000;
+  const stories = await makeStories(users, [...users, ...anc].map((u) => u._id), 100 - Math.min(active, 60));
+  return { created: stories.length };
+}
+
+export const STEPS = { users: stepUsers, posts: stepPosts, social: stepSocial, extras: stepExtras, messages: stepMessages, fixvideos: stepFixVideos, stories: stepFreshStories };

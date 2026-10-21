@@ -20,6 +20,7 @@ export async function runAll() {
     stories: await step("stories", archiveExpiredStories),
     posts: await step("posts", publishDuePosts),
     subs: await step("subs", runSubscriptionMaintenance),
+    demoStories: process.env.SEED_DEMO === "false" ? { ok: true, result: "disabled" } : await step("demoStories", async () => (await import("../seedLarge.js")).stepFreshStories()),
   };
   remember({ step: "tick", ok: Object.values(out).every((x) => x.ok) });
   return out;
