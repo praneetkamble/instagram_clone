@@ -1,0 +1,12 @@
+import express from "express";
+import { protect, adminOnly } from "../middleware/auth.middleware.js";
+import * as c from "../controllers/admin.controller.js";
+const r = express.Router();
+r.use(protect, adminOnly);
+r.get("/stats", c.stats);
+r.get("/:resource", c.list);
+r.get("/:resource/:id", c.getOne);
+r.post("/:resource", c.create);
+r.put("/:resource/:id", c.update);
+r.delete("/:resource/:id", c.remove);
+export default r;

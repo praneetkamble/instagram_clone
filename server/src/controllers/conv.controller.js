@@ -142,7 +142,7 @@ export const sendMessage = async (req, res) => {
       "username fullName profilePicture isVerified",
     );
 
-    io.to(conversationId).emit("receive-message", populatedMessage);
+    io?.to(conversationId).emit("receive-message", populatedMessage);
 
     res.status(201).json({
       success: true,
@@ -185,7 +185,7 @@ export const markMessagesSeen = async (req, res) => {
       },
     );
 
-    io.to(conversationId).emit("messages-seen", {
+    io?.to(conversationId).emit("messages-seen", {
       conversationId,
       userId: req.user._id,
     });

@@ -7,3 +7,6 @@ uploads
 coverage
 
 dist
+.vercel
+.env*
+!.env.example

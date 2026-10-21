@@ -7,6 +7,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import axiosInstance from "@/lib/axios";
+import { useI18n, errorText, LANGUAGES } from "@/lib/i18n";
+import OtpForm from "@/components/insta/OtpForm";
 const page = () => {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
@@ -15,47 +17,63 @@ const page = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const login = useAuthStore((state) => state.login);
+  const { t, lang, setLocalLang } = useI18n();
+  const [challenge, setChallenge] = useState<any>(null);
+  const finish = (data: any) => {
+    login({ user: data.user, token: data.accessToken });
+    toast.add({ type: "success", title: t("auth.loginSuccess"), description: t("auth.welcome", { name: data.user.username }) });
+    router.push("/");
+  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      setError("Please fill in all fields");
+      setError(t("validation.fillAll"));
       return;
     }
     setLoading(true);
     setError("");
     try {
-      const res = await axiosInstance.post("/api/auth/login", {
-        email: email,
-        password: password,
-      });
-      if (res.data.success) {
-        login({ user: res.data.user, token: res.data.accessToken });
-        toast.add({
-          type: "success",
-          title: "Login Successfulle",
-          description: `Hello ${res.data.user.username}`,
-        });
-        setLoading(false);
-        router.push("/");
-      }
+      const res = await axiosInstance.post("/api/auth/login", { email, password });
+      if (res.data.otpRequired) setChallenge(res.data);
+      else if (res.data.success) finish(res.data);
     } catch (error: any) {
-      console.log(error);
-      toast.add({
-        type: "error",
-        description: error.message,
-        priority: "high",
-      });
+      const msg = errorText(t, error);
+      setError(msg);
+      toast.add({ type: "error", description: msg, priority: "high" });
+    } finally {
+      setLoading(false);
     }
+  };
+  const verify = async (code: string) => {
+    try {
+      const res = await axiosInstance.post("/api/auth/login/verify-otp", { challengeToken: challenge.challengeToken, code });
+      finish(res.data);
+    } catch (e: any) {
+      if (["CHALLENGE_EXPIRED", "OTP_LOCKED"].includes(e?.response?.data?.code)) { setChallenge(null); setError(errorText(t, e)); }
+      throw new Error(errorText(t, e));
+    }
+  };
+  const resend = async () => {
+    try {
+      const res = await axiosInstance.post("/api/auth/login/resend-otp", { challengeToken: challenge.challengeToken });
+      setChallenge({ ...challenge, ...res.data });
+      toast.add({ type: "success", title: t("auth.codeResent") });
+    } catch (e: any) { throw new Error(errorText(t, e)); }
   };
 
   return (
-    <div className="min-h-screen bg-ig-bg flex flex-col">
+    <div className="min-h-screen ig-mesh flex flex-col"><div className="ig-mesh-orb" />
       {/* Desktop: two-column; Mobile: single card */}
-      <div className="flex-1 flex items-center justify-center px-4 py-8">
+      <div className="relative z-10 flex-1 flex items-center justify-center px-4 py-8">
         <div className="w-full flex gap-8 items-center justify-center max-w-[900px]">
           {/* Left – phone mockup (desktop only) */}
           <div className="hidden lg:flex flex-col items-center justify-center w-[380px] shrink-0">
-            <div className="relative w-[250px] h-[500px]">
+            <div className="relative w-[250px] h-[500px] ig-float" style={{ ["--r" as any]: "0deg" }}>
+              {/* floating collage */}
+              <div className="ig-float-2 absolute -left-16 top-16 w-36 rounded-2xl ig-glass !rounded-2xl p-2 rotate-[-8deg] z-10" style={{ ["--r" as any]: "-8deg" }}><img src="https://picsum.photos/seed/ig4/300/300" alt="" className="rounded-xl w-full aspect-square object-cover" /><div className="flex items-center gap-1 px-1 pt-1.5 text-[10px] font-semibold text-ig-text">❤️ 2,481</div></div>
+              <div className="ig-float-3 absolute -right-20 top-40 w-40 rounded-2xl ig-glass !rounded-2xl p-2 rotate-[7deg] z-10" style={{ ["--r" as any]: "7deg" }}><img src="https://picsum.photos/seed/ig9/300/380" alt="" className="rounded-xl w-full aspect-[4/5] object-cover" /><div className="px-1 pt-1.5 text-[10px] text-ig-text"><b>kabir.lens</b> monsoon on film 🌧️</div></div>
+              <div className="ig-float absolute -left-10 bottom-10 z-10 ig-glass !rounded-full px-3 py-2 flex items-center gap-2 text-xs font-semibold text-ig-text"><span className="w-7 h-7 rounded-full ig-grad flex items-center justify-center text-white">♥</span> aanya.travels liked your post</div>
+              
               {/* Phone frame */}
               <div className="absolute inset-0 rounded-[36px] border-4 border-ig-text bg-ig-surface shadow-2xl overflow-hidden">
                 {/* Status bar */}
@@ -146,9 +164,9 @@ const page = () => {
           {/* Right – form */}
           <div className="w-full max-w-[350px] flex flex-col gap-3">
             {/* Login card */}
-            <div className="bg-ig-surface border border-ig-border rounded-sm px-10 pt-10 pb-6">
+            <div className="ig-glass ig-fade-in relative z-10 px-8 sm:px-10 pt-10 pb-6">
               {/* Logo */}
-              <h1 className="instagram-font text-[38px] text-center text-ig-text mb-8 leading-none">
+              <h1 className="instagram-font text-[42px] text-center ig-grad-text mb-8 leading-none">
                 Instagram
               </h1>
 
@@ -158,10 +176,13 @@ const page = () => {
                 </p>
               )}
 
+              {challenge ? (
+                <OtpForm destination={challenge.destination} minutes={challenge.ttlMinutes} note={t("auth.chromeOtpNote")} onVerify={verify} onResend={resend} onCancel={() => setChallenge(null)} />
+              ) : (
               <form onSubmit={handleSubmit} className="flex flex-col gap-[6px]">
                 <input
                   type="email"
-                  placeholder="email"
+                  placeholder={t("auth.email")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-ig-bg border border-ig-border rounded-[3px] text-[12px] px-2 py-[9px] focus:outline-none focus:border-ig-muted placeholder:text-ig-muted text-ig-text"
@@ -169,7 +190,7 @@ const page = () => {
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
-                    placeholder="Password"
+                    placeholder={t("auth.password")}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full bg-ig-bg border border-ig-border rounded-[3px] text-[12px] px-2 py-[9px] pr-16 focus:outline-none focus:border-ig-muted placeholder:text-ig-muted text-ig-text"
@@ -188,7 +209,7 @@ const page = () => {
                 <button
                   type="submit"
                   disabled={!email || !password || loading}
-                  className="w-full bg-[#0095f6] text-white text-sm font-semibold rounded-lg py-[7px] mt-2 disabled:opacity-50 hover:bg-[#1877f2] transition-colors active:scale-[0.98]"
+                  className="ig-btn ig-btn-gradient w-full !py-2 mt-2"
                 >
                   {loading ? (
                     <span className="flex items-center justify-center gap-2">
@@ -211,19 +232,20 @@ const page = () => {
                           d="M4 12a8 8 0 018-8v8H4z"
                         />
                       </svg>
-                      Logging in…
+                      {t("auth.loggingIn")}
                     </span>
                   ) : (
-                    "Log in"
+                    t("auth.login")
                   )}
                 </button>
               </form>
+              )}
 
               {/* Divider */}
               <div className="flex items-center gap-4 my-4">
                 <div className="flex-1 h-px bg-ig-border" />
                 <span className="text-[13px] font-semibold text-ig-muted tracking-widest">
-                  OR
+                  {t("footer.or")}
                 </span>
                 <div className="flex-1 h-px bg-ig-border" />
               </div>
@@ -239,33 +261,33 @@ const page = () => {
                 >
                   <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                 </svg>
-                Log in with Facebook
+                {t("footer.facebook")}
               </button>
 
               <a
                 href="#"
                 className="block text-center text-xs text-ig-blue mt-4 hover:underline"
               >
-                Forgot password?
+                {t("footer.forgot")}
               </a>
             </div>
 
             {/* Sign up card */}
-            <div className="bg-ig-surface border border-ig-border rounded-sm py-4 text-center">
+            <div className="ig-glass !rounded-2xl relative z-10 py-4 text-center">
               <p className="text-sm text-ig-text">
-                Don&apos;t have an account?{" "}
+                {t("auth.noAccount")}{" "}
                 <Link
                   href="/signup"
                   className="text-[#0095f6] font-semibold hover:text-[#1877f2] dark:text-[#38b6ff] dark:hover:text-[#5cc8ff]"
                 >
-                  Sign up
+                  {t("auth.signup")}
                 </Link>
               </p>
             </div>
 
             {/* App stores */}
             <div className="mt-1 text-center">
-              <p className="text-sm text-ig-text mb-4">Get the app.</p>
+              <p className="text-sm text-ig-text mb-4">{t("footer.getApp")}</p>
               <div className="flex justify-center gap-2">
                 <div className="border border-ig-text rounded-lg px-3 py-1 flex items-center gap-2">
                   <svg
@@ -312,18 +334,18 @@ const page = () => {
       </div>
 
       {/* Footer */}
-      <footer className="py-4 text-center">
+      <footer className="py-4 text-center relative z-10">
         <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 mb-2">
           {[
             "Meta",
-            "About",
-            "Blog",
-            "Jobs",
-            "Help",
+            t("footer.about"),
+            t("footer.blog"),
+            t("footer.jobs"),
+            t("footer.help"),
             "API",
-            "Privacy",
-            "Terms",
-            "Locations",
+            t("footer.privacy"),
+            t("footer.terms"),
+            t("footer.locations"),
             "Instagram Lite",
             "Threads",
           ].map((item) => (
@@ -336,6 +358,9 @@ const page = () => {
             </a>
           ))}
         </div>
+        <select aria-label="language" value={lang} onChange={(e) => setLocalLang(e.target.value as any)} className="text-[12px] text-ig-muted bg-transparent mb-2">
+          {LANGUAGES.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}
+        </select>
         <p className="text-[12px] text-ig-muted">
           &copy; 2026 Instagram from Meta
         </p>

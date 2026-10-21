@@ -7,6 +7,7 @@ import AuthProvider from "@/providers/AuthProvider";
 import AuthGuard from "@/lib/AuthGuard";
 import { Toaster } from "@/components/ui/toast";
 import SocketProvider from "@/lib/SocketProvider";
+import { I18nProvider } from "@/lib/i18n";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -31,12 +32,14 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider>
           <AuthProvider>
+          <I18nProvider>
             <CreateModalProvider>
               <AuthGuard>
                 <SocketProvider>{children}</SocketProvider>
               </AuthGuard>
               <Toaster />
             </CreateModalProvider>
+          </I18nProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

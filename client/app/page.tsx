@@ -6,12 +6,13 @@ import RightSidebar from "@/components/insta/RightSidebar";
 import Sidebar from "@/components/insta/Sidebar";
 import Stories from "@/components/insta/Stories";
 import axiosInstance from "@/lib/axios";
-import { mockPosts } from "@/lib/mock-data";
 import { useEffect, useState } from "react";
+import { useI18n } from "@/lib/i18n";
 
 export default function Home() {
   const [posts, setPosts] = useState([]);
   const [loading, setloading] = useState(true);
+  const { t } = useI18n();
   const fetchPosts = async () => {
     try {
       const res = await axiosInstance.get("/api/posts");
@@ -31,11 +32,17 @@ export default function Home() {
       <Sidebar />
       <div className="md:ml-[72px] xl:ml-[244px]">
         <div className="max-w-[1200px] mx-auto flex gap-10 px-8 py-6">
-          <main className="flex-1 max-w-[600px]">
+          <main className="flex-1 min-w-0 max-w-[600px]">
             <Stories />
             {loading ? (
-              <div className="flex justify-center py-20">
-                <p className="text-ig-muted">Loading posts...</p>
+              <div className="space-y-6 py-4" aria-label={t("feed.loading")}>
+                {[0, 1].map((i) => (
+                  <div key={i} className="ig-card p-4 space-y-3">
+                    <div className="flex items-center gap-3"><div className="ig-skeleton w-9 h-9 !rounded-full" /><div className="ig-skeleton h-3 w-32" /></div>
+                    <div className="ig-skeleton aspect-square w-full" />
+                    <div className="ig-skeleton h-3 w-2/3" />
+                  </div>
+                ))}
               </div>
             ) : (
               <>
@@ -59,11 +66,11 @@ export default function Home() {
                   </div>
 
                   <p className="text-sm font-semibold text-ig-text">
-                    You're all caught up
+                    {t("feed.caughtUp")}
                   </p>
 
                   <p className="text-sm text-ig-muted text-center">
-                    You've seen all new posts from the past 3 days.
+                    {t("feed.caughtUpSub")}
                   </p>
                 </div>
               </>

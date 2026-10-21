@@ -5,6 +5,16 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --color-ig-bg: hsl(var(--ig-bg));
+  --color-ig-ig: hsl(var(--ig-bg));
+  --color-ig-surface: hsl(var(--ig-surface));
+  --color-ig-text: hsl(var(--ig-text));
+  --color-ig-text-inverse: hsl(var(--ig-text-inverse));
+  --color-ig-muted: hsl(var(--ig-muted));
+  --color-ig-border: hsl(var(--ig-border));
+  --color-ig-hover: hsl(var(--ig-hover));
+  --color-ig-input: hsl(var(--ig-input));
+  --color-ig-blue: hsl(var(--ig-blue));
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
@@ -271,3 +281,122 @@
     opacity: 0;
   }
 }
+
+/* ───────────── Design system (polish) ───────────── */
+:root {
+  --ig-grad: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  --ig-grad-soft: linear-gradient(135deg, rgba(240,148,51,.12), rgba(220,39,67,.12) 50%, rgba(188,24,136,.12));
+  --ig-radius: 14px;
+  --ig-shadow-sm: 0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06);
+  --ig-shadow-md: 0 4px 16px -4px rgba(16,24,40,.10), 0 2px 6px -2px rgba(16,24,40,.06);
+  --ig-shadow-lg: 0 24px 48px -12px rgba(16,24,40,.25);
+}
+.dark { --ig-shadow-sm: 0 1px 2px rgba(0,0,0,.4); --ig-shadow-md: 0 6px 20px -6px rgba(0,0,0,.6); --ig-shadow-lg: 0 24px 60px -12px rgba(0,0,0,.8); }
+body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; letter-spacing: -0.005em; }
+::selection { background: rgba(220,39,67,.22); }
+.ig-grad { background: var(--ig-grad); }
+.ig-grad-soft { background: var(--ig-grad-soft); }
+.ig-grad-text { background: var(--ig-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.ig-card { background: hsl(var(--ig-surface)); border: 1px solid hsl(var(--ig-border)); border-radius: var(--ig-radius); box-shadow: var(--ig-shadow-sm); transition: box-shadow .2s ease, transform .2s ease, border-color .2s ease; }
+.ig-card-hover:hover { box-shadow: var(--ig-shadow-md); transform: translateY(-2px); }
+.ig-btn { display:inline-flex; align-items:center; justify-content:center; gap:.4rem; border-radius: 10px; padding:.55rem 1rem; font-size:.875rem; font-weight:600; transition: transform .12s ease, box-shadow .2s ease, filter .2s ease, background-color .2s; }
+.ig-btn:active:not(:disabled) { transform: scale(.97); }
+.ig-btn:disabled { opacity:.5; cursor:not-allowed; }
+.ig-btn-primary { color:#fff; background: linear-gradient(90deg,#0095f6,#4f5bd5); box-shadow: 0 4px 14px -4px rgba(0,149,246,.55); }
+.ig-btn-primary:hover:not(:disabled) { filter: brightness(1.07); box-shadow: 0 6px 18px -4px rgba(0,149,246,.6); }
+.ig-btn-gradient { color:#fff; background: var(--ig-grad); box-shadow: 0 6px 18px -6px rgba(220,39,67,.6); }
+.ig-btn-gradient:hover:not(:disabled) { filter: brightness(1.08) saturate(1.1); }
+.ig-btn-ghost { color: hsl(var(--ig-text)); background: hsl(var(--ig-hover)); border:1px solid hsl(var(--ig-border)); }
+.ig-btn-ghost:hover:not(:disabled) { background: hsl(var(--ig-border)); }
+.ig-input { width:100%; background: hsl(var(--ig-input)); border:1px solid hsl(var(--ig-border)); border-radius:10px; padding:.55rem .75rem; font-size:.875rem; color: hsl(var(--ig-text)); transition: border-color .15s, box-shadow .15s, background-color .15s; }
+.ig-input::placeholder { color: hsl(var(--ig-muted)); }
+.ig-input:focus { outline:none; border-color:#0095f6; background: hsl(var(--ig-surface)); box-shadow: 0 0 0 3px rgba(0,149,246,.18); }
+:where(button, a, input, select, textarea, [tabindex]):focus-visible { outline: 2px solid #0095f6; outline-offset: 2px; border-radius: 8px; }
+.ig-pill { border-radius:999px; padding:.4rem .9rem; font-size:.8125rem; font-weight:500; transition: all .2s ease; white-space:nowrap; flex-shrink:0; }
+.ig-pill-on { color:#fff; background: hsl(var(--ig-text)); box-shadow: var(--ig-shadow-sm); }
+.dark .ig-pill-on { color:#000; }
+.ig-pill-off { color: hsl(var(--ig-text)); background: hsl(var(--ig-hover)); }
+.ig-pill-off:hover { background: hsl(var(--ig-border)); }
+.ig-backdrop { background: rgba(10,10,15,.55); backdrop-filter: blur(8px) saturate(1.2); -webkit-backdrop-filter: blur(8px) saturate(1.2); animation: igFade .18s ease both; }
+.ig-modal { background: hsl(var(--ig-surface) / .96); border:1px solid hsl(var(--ig-border)); border-radius: 20px; box-shadow: var(--ig-shadow-lg); animation: igPop .22s cubic-bezier(.2,.9,.3,1.2) both; }
+.ig-fade-in { animation: igFadeUp .35s ease both; }
+@keyframes igFade { from { opacity:0 } to { opacity:1 } }
+@keyframes igFadeUp { from { opacity:0; transform: translateY(6px) } to { opacity:1; transform:none } }
+@keyframes igPop { from { opacity:0; transform: scale(.96) translateY(6px) } to { opacity:1; transform:none } }
+.ig-skeleton { position:relative; overflow:hidden; background: hsl(var(--ig-hover)); border-radius: 10px; }
+.ig-skeleton::after { content:""; position:absolute; inset:0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, hsl(var(--ig-surface) / .7), transparent); animation: igShimmer 1.3s infinite; }
+@keyframes igShimmer { to { transform: translateX(100%) } }
+.ig-table thead th { position: sticky; top: 0; background: hsl(var(--ig-hover)); font-weight:600; text-transform: uppercase; font-size: 10px; letter-spacing: .04em; color: hsl(var(--ig-muted)); }
+.ig-table tbody tr { transition: background-color .15s; }
+.ig-table tbody tr:hover { background: hsl(var(--ig-hover) / .7); }
+.story-gradient { transition: transform .2s ease; }
+button:hover > .story-gradient { transform: scale(1.04); }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+
+/* ───────────── v2: bold premium layer ───────────── */
+@property --ig-angle { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
+.story-gradient { background: conic-gradient(from var(--ig-angle), #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5, #feda75) !important; animation: igSpin 4s linear infinite; }
+.story-ring-glow { box-shadow: 0 0 0 0 rgba(214,41,118,.5), 0 6px 18px -6px rgba(214,41,118,.55); animation: igSpin 4s linear infinite, igGlow 2.4s ease-in-out infinite; }
+@keyframes igSpin { to { --ig-angle: 360deg; } }
+@keyframes igGlow { 50% { box-shadow: 0 0 0 4px rgba(214,41,118,.12), 0 8px 24px -6px rgba(214,41,118,.7); } }
+.ig-grad-anim { background: linear-gradient(120deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5,#d62976,#feda75); background-size: 300% 300%; animation: igPan 8s ease infinite; }
+@keyframes igPan { 0%,100% { background-position: 0% 50% } 50% { background-position: 100% 50% } }
+.ig-border-anim { position: relative; isolation: isolate; }
+.ig-border-anim::before { content:""; position:absolute; inset:-2px; z-index:-1; border-radius: inherit; background: conic-gradient(from var(--ig-angle), #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5, #feda75); animation: igSpin 5s linear infinite; }
+.ig-border-anim::after { content:""; position:absolute; inset:-14px; z-index:-2; border-radius: inherit; background: conic-gradient(from var(--ig-angle), #fa7e1e, #d62976, #962fbf, #fa7e1e); filter: blur(26px); opacity:.35; animation: igSpin 5s linear infinite; }
+/* mesh background for auth */
+.ig-mesh { position: relative; overflow: hidden; background: #0b0614; }
+.ig-mesh::before, .ig-mesh::after { content:""; position:absolute; width: 70vmax; height: 70vmax; border-radius: 50%; filter: blur(90px); opacity: .55; pointer-events:none; }
+.ig-mesh::before { background: radial-gradient(circle, #d62976, transparent 65%); top: -25vmax; left: -20vmax; animation: igFloatA 18s ease-in-out infinite; }
+.ig-mesh::after { background: radial-gradient(circle, #4f5bd5, transparent 65%); bottom: -30vmax; right: -20vmax; animation: igFloatB 22s ease-in-out infinite; }
+.ig-mesh-orb { position:absolute; width: 40vmax; height: 40vmax; border-radius:50%; background: radial-gradient(circle,#fa7e1e,transparent 65%); filter: blur(80px); opacity:.45; top: 40%; left: 45%; animation: igFloatA 26s ease-in-out infinite reverse; pointer-events:none; }
+:root:not(.dark) .ig-mesh { background: #fff5f8; }
+:root:not(.dark) .ig-mesh::before, :root:not(.dark) .ig-mesh::after, :root:not(.dark) .ig-mesh-orb { opacity: .32; }
+@keyframes igFloatA { 50% { transform: translate(8vmax, 6vmax) scale(1.1); } }
+@keyframes igFloatB { 50% { transform: translate(-8vmax, -5vmax) scale(1.15); } }
+.ig-glass { background: hsl(var(--ig-surface) / .72); backdrop-filter: blur(22px) saturate(1.6); -webkit-backdrop-filter: blur(22px) saturate(1.6); border: 1px solid hsl(0 0% 100% / .35); box-shadow: 0 30px 80px -20px rgba(80,20,90,.35); border-radius: 24px; }
+.dark .ig-glass { border-color: hsl(0 0% 100% / .08); background: hsl(0 0% 6% / .6); }
+.ig-float { animation: igBob 6s ease-in-out infinite; }
+.ig-float-2 { animation: igBob 7s ease-in-out -2s infinite; }
+.ig-float-3 { animation: igBob 8s ease-in-out -4s infinite; }
+@keyframes igBob { 50% { transform: translateY(-14px) rotate(var(--r,0deg)); } 0%,100% { transform: translateY(0) rotate(var(--r,0deg)); } }
+/* heart burst */
+.ig-heart-burst { animation: igBurst .9s cubic-bezier(.2,1.4,.4,1) both; filter: drop-shadow(0 8px 24px rgba(237,73,86,.55)); }
+@keyframes igBurst { 0% { transform: scale(0) rotate(-12deg); opacity: 0 } 15% { transform: scale(1.25) rotate(0); opacity: 1 } 30% { transform: scale(.95) } 45% { transform: scale(1.05) } 80% { transform: scale(1); opacity: 1 } 100% { transform: scale(1.3) translateY(-30px); opacity: 0 } }
+.ig-like-pop { animation: igLikePop .45s cubic-bezier(.2,1.6,.4,1); }
+@keyframes igLikePop { 0% { transform: scale(1) } 40% { transform: scale(1.35) } 100% { transform: scale(1) } }
+.ig-sparkle { position:absolute; width:8px; height:8px; border-radius:50%; background: var(--ig-grad); animation: igSpark .8s ease-out both; }
+@keyframes igSpark { from { transform: translate(0,0) scale(1); opacity:1 } to { transform: translate(var(--dx), var(--dy)) scale(0); opacity:0 } }
+/* sidebar active pill */
+.ig-nav-item { position: relative; }
+.ig-nav-item.is-active { background: linear-gradient(90deg, rgba(214,41,118,.10), rgba(79,91,213,.06)); }
+.ig-nav-item.is-active::before { content:""; position:absolute; left:-12px; top:22%; bottom:22%; width:4px; border-radius: 0 4px 4px 0; background: linear-gradient(180deg,#fa7e1e,#d62976,#962fbf); box-shadow: 0 0 12px rgba(214,41,118,.6); }
+.ig-nav-item svg { transition: transform .25s cubic-bezier(.2,1.5,.4,1); }
+.ig-nav-item:hover svg { transform: scale(1.12) rotate(-4deg); }
+/* page transition */
+main.ig-fade-in { animation: igPage .45s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes igPage { from { opacity:0; transform: translateY(10px); filter: blur(4px) } to { opacity:1; transform:none; filter:none } }
+.ig-stagger > * { animation: igFadeUp .5s cubic-bezier(.2,.8,.2,1) both; }
+.ig-stagger > *:nth-child(2) { animation-delay: .05s } .ig-stagger > *:nth-child(3) { animation-delay: .1s } .ig-stagger > *:nth-child(4) { animation-delay: .15s } .ig-stagger > *:nth-child(5) { animation-delay: .2s } .ig-stagger > *:nth-child(n+6) { animation-delay: .25s }
+/* deep dark */
+.dark body { background: radial-gradient(1200px 600px at 85% -10%, rgba(150,47,191,.14), transparent 60%), radial-gradient(900px 500px at -10% 110%, rgba(214,41,118,.10), transparent 60%), #000; background-attachment: fixed; }
+.dark .ig-card { background: linear-gradient(180deg, hsl(0 0% 9% / .92), hsl(0 0% 6% / .92)); border-color: hsl(0 0% 100% / .07); }
+.dark .bg-ig-bg { background-color: transparent; }
+/* scrollbar */
+* { scrollbar-width: thin; scrollbar-color: hsl(var(--ig-border)) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: hsl(var(--ig-border)); border-radius: 99px; border: 3px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: linear-gradient(#d62976,#962fbf); background-clip: padding-box; }
+/* trend chip */
+.ig-chip { display:inline-flex; align-items:center; gap:2px; font-size:10px; font-weight:700; padding:2px 7px; border-radius:99px; }
+.ig-chip-up { color:#16a34a; background: rgba(22,163,74,.12); } .ig-chip-down { color:#dc2626; background: rgba(220,38,38,.12); }
+/* toasts */
+[data-base-ui-toast], [data-toast], .ig-toast { border-radius: 14px !important; backdrop-filter: blur(16px); box-shadow: var(--ig-shadow-lg) !important; }
+.ig-media { border-radius: 0; }
+@media (min-width: 768px) { .ig-media { border-radius: 12px; } }
+@keyframes igDraw { to { stroke-dashoffset: 0; } }
+
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+@keyframes ig-kenburns { from { transform: scale(1); } to { transform: scale(1.08); } }
+.ig-kenburns { animation: ig-kenburns 12s ease-in-out infinite alternate; }

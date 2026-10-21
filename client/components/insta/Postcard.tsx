@@ -13,19 +13,32 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { useI18n, errorText } from "@/lib/i18n";
+import { toast } from "../ui/toast";
 
 const Postcard = ({ post }: any) => {
-  const user = useAuthStore((state) => state.user);
+  const user = useAuthStore((state: any) => state.user);
+  const { t } = useI18n();
   const [liked, setLiked] = useState(
     post.likes.some((like: any) => like.user?._id === user?._id),
   );
   const [likeCount, setLikeCount] = useState(post.likes.length);
   const [saved, setSaved] = useState(false);
   const [showHeart, setShowHeart] = useState(false);
+  const [pop, setPop] = useState(0);
   const [commentText, setCommentText] = useState("");
   const [showAllComments, setShowAllComments] = useState(false);
   const [captionExpanded, setCaptionExpanded] = useState(false);
-  const [localComments, setLocalComments] = useState(post.comments);
+  const [localComments, setLocalComments] = useState<any[]>(post.comments || []);
+  useEffect(() => {
+    if (post.commentsCount > 0) axiosInstance.get(`/api/posts/${post._id}/comments`).then((r) => setLocalComments(r.data.items.slice().reverse())).catch(() => {});
+  }, [post._id, post.commentsCount]);
+  const report = async () => {
+    const reason = prompt(t("post.reportReason"));
+    if (!reason) return;
+    try { await axiosInstance.post("/api/posts/reports", { targetType: "post", targetId: post._id, reason }); toast.add({ type: "success", title: t("post.reported") }); }
+    catch (e) { toast.add({ type: "error", title: errorText(t, e) }); }
+  };
   const lastTapRef = useRef(0);
 
   useEffect(() => {
@@ -40,7 +53,7 @@ const Postcard = ({ post }: any) => {
         setLikeCount((prev: number) => prev - 1);
       } else {
         await axiosInstance.post(`/api/likes/${post._id}`);
-        setLiked(true);
+        setLiked(true); setPop((p) => p + 1);
         setLikeCount((prev: number) => prev + 1);
       }
     } catch (error) {
@@ -62,28 +75,24 @@ const Postcard = ({ post }: any) => {
           setLikeCount((c: any) => c + 1);
         } catch (error) {}
       }
-      setShowHeart(true);
-      setTimeout(() => setShowHeart(false), 1000);
+      setShowHeart(false); requestAnimationFrame(() => setShowHeart(true));
+      setPop((p) => p + 1);
+      setTimeout(() => setShowHeart(false), 900);
     }
     lastTapRef.current = now;
   };
 
-  const handleComment = (e: React.FormEvent) => {
+  const handleComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentText.trim()) return;
-    setLocalComments((prev: any) => [
-      ...prev,
-      {
-        _id: `c_${Date.now()}`,
-        user: user,
-        text: commentText.trim(),
-        createdAt: new Date().toISOString(),
-      },
-    ]);
-    setCommentText("");
+    try {
+      const r = await axiosInstance.post(`/api/posts/${post._id}/comments`, { text: commentText.trim() });
+      setLocalComments((prev: any) => [...prev, r.data.comment]);
+      setCommentText("");
+    } catch (err) { toast.add({ type: "error", title: errorText(t, err) }); }
   };
 
-  const captionText = post.caption;
+  const captionText = post.caption || "";
   const isCaptionLong = captionText.length > 125;
   const displayCaption =
     isCaptionLong && !captionExpanded
@@ -94,7 +103,7 @@ const Postcard = ({ post }: any) => {
     ? localComments
     : localComments?.slice(0, 2);
   return (
-    <article className="bg-ig-surface border-b border-ig-border md:border md:rounded-sm md:mb-6">
+    <article className="bg-ig-surface border-b border-ig-border md:border md:rounded-2xl md:mb-6 md:shadow-[var(--ig-shadow-sm)] md:overflow-hidden ig-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3">
         <Link
@@ -133,31 +142,30 @@ const Postcard = ({ post }: any) => {
             )}
           </div>
         </Link>
-        <button className="text-ig-text hover:text-ig-muted transition-colors">
+        <button onClick={report} title="Report" className="text-ig-text hover:text-ig-muted transition-colors">
           <MoreHorizontal size={20} />
         </button>
       </div>
       {/* Image */}
       <div
-        className="relative bg-black cursor-pointer select-none"
+        className="relative bg-black cursor-pointer select-none overflow-hidden md:mx-3 md:rounded-xl"
         onClick={handleDoubleTap}
       >
         <img
           src={post.media[0].url}
           alt="post"
-          className="w-full object-cover max-h-[600px]"
+          className="w-full object-cover max-h-[600px] transition-transform duration-700 hover:scale-[1.015]"
           draggable={false}
         />
         {/* Double-tap heart */}
         <div
-          className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-all duration-300 ${
-            showHeart ? "opacity-100 scale-100" : "opacity-0 scale-75"
-          }`}
+          className="absolute inset-0 flex items-center justify-center pointer-events-none"
         >
-          <Heart
-            size={90}
-            className="text-red-500 fill-red-500 drop-shadow-lg"
-          />
+          {showHeart && <>
+            <Heart size={110} className="ig-heart-burst text-white fill-[url(#igHeartGrad)]" strokeWidth={0} />
+            {[[-70,-60],[70,-60],[-90,10],[90,10],[-40,70],[40,70]].map(([dx,dy],i) => <span key={i} className="ig-sparkle" style={{ ["--dx" as any]: `${dx}px`, ["--dy" as any]: `${dy}px`, animationDelay: `${0.1 + i * 0.02}s` }} />)}
+          </>}
+          <svg width="0" height="0" className="absolute"><defs><linearGradient id="igHeartGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#feda75" /><stop offset="35%" stopColor="#fa7e1e" /><stop offset="65%" stopColor="#d62976" /><stop offset="100%" stopColor="#962fbf" /></linearGradient></defs></svg>
         </div>
       </div>
       <div className="px-4 pt-3 pb-1">
@@ -168,10 +176,11 @@ const Postcard = ({ post }: any) => {
               className="hover:opacity-60 transition-all active:scale-125 duration-150"
             >
               <Heart
+                key={pop}
                 size={24}
                 strokeWidth={1.5}
                 className={`transition-colors duration-200 ${
-                  liked ? "fill-[#ed4956] text-[#ed4956]" : "text-ig-text"
+                  liked ? "fill-[#ed4956] text-[#ed4956] ig-like-pop" : "text-ig-text"
                 }`}
               />
             </button>
@@ -200,7 +209,7 @@ const Postcard = ({ post }: any) => {
 
         {/* Likes */}
         <p className="text-sm font-semibold text-ig-text mb-1">
-          {formatLikeCount(likeCount)} {likeCount === 1 ? "like" : "likes"}
+          {t("post.likes", { count: formatLikeCount(likeCount) })}
         </p>
 
         {/* Caption */}
@@ -228,7 +237,7 @@ const Postcard = ({ post }: any) => {
             onClick={() => setShowAllComments(true)}
             className="text-sm text-ig-muted mb-1 block"
           >
-            View all {localComments.length} comments
+            {t("post.viewComments")} ({localComments.length})
           </button>
         )}
         {visibleComments?.map((comment: any) => (
@@ -269,7 +278,7 @@ const Postcard = ({ post }: any) => {
               type="text"
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
-              placeholder="Add a comment…"
+              placeholder={t("post.addComment")}
               className="flex-1 text-sm text-ig-text placeholder:text-ig-muted outline-none bg-transparent"
             />
             <button
@@ -284,7 +293,7 @@ const Postcard = ({ post }: any) => {
               type="submit"
               className="text-sm font-semibold text-[#0095f6] hover:text-[#1877f2] dark:text-[#38b6ff] dark:hover:text-[#5cc8ff]"
             >
-              Post
+              {t("post.post")}
             </button>
           )}
         </form>

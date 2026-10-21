@@ -1,0 +1,13 @@
+import express from "express";
+import { protect } from "../middleware/auth.middleware.js";
+import * as c from "../controllers/subscription.controller.js";
+const r = express.Router();
+r.post("/webhook", c.webhook);
+r.get("/plans", protect, c.getPlans);
+r.post("/order", protect, c.createOrder);
+r.post("/verify", protect, c.verifyPayment);
+r.post("/failure", protect, c.paymentFailed);
+r.post("/mock-checkout", protect, c.mockCheckout);
+r.post("/cancel", protect, c.cancelSubscription);
+r.get("/history", protect, c.history);
+export default r;

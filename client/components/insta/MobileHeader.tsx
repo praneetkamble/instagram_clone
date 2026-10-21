@@ -1,12 +1,14 @@
 "use client";
 
-import { mockConversations } from "@/lib/mock-data";
+
 import { useTheme } from "@/lib/theme-context";
-import { Heart, Moon, Sun } from "lucide-react";
+import { Heart, Moon, Settings, Sun } from "lucide-react";
 import Link from "next/link";
+import { useUnreadNotifications, useUnreadMessages } from "@/lib/realtime";
 
 const MobileHeader = () => {
-  const totalUnread = mockConversations.reduce((s, c) => s + c.unread, 0);
+  const unread = useUnreadNotifications();
+  const totalUnread = useUnreadMessages();
   const { theme, toggle } = useTheme();
   return (
     <header className="md:hidden fixed top-0 left-0 right-0 bg-ig-surface border-b border-ig-border z-50 h-[44px] flex items-center justify-between px-4">
@@ -26,9 +28,12 @@ const MobileHeader = () => {
         </span>
       </Link>
       <div className="flex items-center gap-5">
-        <button className="text-ig-text active:opacity-60 transition-opacity">
-          <Heart size={22} strokeWidth={1.5} />
-        </button>
+        <Link href="/settings" aria-label="settings" className="text-ig-text active:opacity-60 transition-opacity">
+          <Settings size={22} strokeWidth={1.5} />
+        </Link>
+        <Link href="/notifications" aria-label="notifications" className="text-ig-text active:opacity-60 transition-opacity">
+          <span className="relative block"><Heart size={22} strokeWidth={1.5} />{unread > 0 && <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 bg-[#ed4956] text-white text-[9px] font-bold rounded-full flex items-center justify-center">{unread}</span>}</span>
+        </Link>
         <Link
           href="/messages"
           className="text-ig-text active:opacity-60 transition-opacity relative"

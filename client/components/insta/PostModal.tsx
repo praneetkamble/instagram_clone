@@ -83,7 +83,7 @@ export default function PostModal({ post: initialPost, posts, onClose }: PostMod
 
   return (
     <div
-      className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center"
+      className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       {/* Close */}

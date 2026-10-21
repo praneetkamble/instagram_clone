@@ -11,6 +11,7 @@ import {
   mockConversations,
 } from "@/lib/mock-data";
 import { socket } from "@/lib/socket";
+import { rtEmit, rtOn, usePoll, USE_SOCKETS } from "@/lib/realtime";
 import useAuthStore from "@/store/authStore";
 import {
   Check,
@@ -30,8 +31,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { useI18n } from "@/lib/i18n";
 
 const page = () => {
+  const { t } = useI18n();
   const user = useAuthStore((state) => state.user);
   const [loading, setLoading] = useState(true);
   const [conversations, setConversations] = useState<any[]>([]);
@@ -69,10 +72,10 @@ const page = () => {
   };
   const openConversation = async (conversation: any) => {
     if (activeConversation) {
-      socket.emit("leave-conversation", activeConversation._id);
+      rtEmit("leave-conversation", activeConversation._id);
     }
 
-    socket.emit("join-conversation", conversation._id);
+    rtEmit("join-conversation", conversation._id);
 
     setActiveConversation(conversation);
     setShowChat(true);
@@ -89,7 +92,7 @@ const page = () => {
     const receiveMessage = (message: any) => {
       if (message.conversation !== activeConversation?._id) return;
 
-      setMessages((prev) => [...prev, message]);
+      setMessages((prev) => (prev.some((m) => m._id === message._id) ? prev : [...prev, message]));
     };
 
     socket.on("receive-message", receiveMessage);
@@ -116,6 +119,18 @@ const page = () => {
       socket.off("messages-seen", seenHandler);
     };
   }, [activeConversation]);
+
+  // Polling fallback (default on Vercel): refresh the open thread + seen state while the tab is visible.
+  usePoll(async () => {
+    if (!activeConversation) return;
+    const res = await axiosInstance.get(`/api/conversation/${activeConversation._id}/messages`);
+    const next = res.data.messages || [];
+    setMessages((prev) => {
+      const sig = (a: any[]) => a.map((m) => `${m._id}:${m.isSeen ? 1 : 0}`).join(",");
+      return sig(prev) === sig(next) ? prev : next;
+    });
+    if (next.some((m: any) => !m.isSeen && (m.sender?._id || m.sender) !== user?._id)) axiosInstance.put(`/api/conversation/${activeConversation._id}/seen`).catch(() => {});
+  }, 3000, !USE_SOCKETS && !!activeConversation);
 
   const filtered = conversations.filter((c: any) => {
     const other = c.participants.find((p: any) => p._id !== user._id);
@@ -167,7 +182,7 @@ const page = () => {
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search"
+                  placeholder={t("common.search")}
                   className="flex-1 bg-transparent text-sm text-ig-text placeholder:text-ig-muted outline-none"
                 />
               </div>
@@ -176,7 +191,7 @@ const page = () => {
             {/* Tabs */}
             <div className="flex border-b border-ig-border shrink-0">
               <button className="flex-1 py-2 text-sm font-semibold text-ig-text border-b-2 border-ig-text">
-                Messages
+                {t("nav.messages")}
                 {totalUnread > 0 && (
                   <span className="ml-2 bg-[#ed4956] text-white text-[10px] font-bold rounded-full w-4 h-4 inline-flex items-center justify-center">
                     {totalUnread}
@@ -184,14 +199,14 @@ const page = () => {
                 )}
               </button>
               <button className="flex-1 py-2 text-sm text-ig-muted hover:text-ig-text transition-colors">
-                Requests
+                {t("msg.requests")}
               </button>
             </div>
             {/* Ḷists */}
             <div>
               {filtered.length === 0 ? (
                 <div>
-                  <Search /> <p>No results found</p>
+                  <Search /> <p>{t("msg.noResults")}</p>
                 </div>
               ) : (
                 filtered.map((conv) => (
@@ -223,13 +238,13 @@ const page = () => {
                   <Send size={32} strokeWidth={1} className="text-ig-text" />
                 </div>
                 <h2 className="text-xl font-light text-ig-text">
-                  Your messages
+                  {t("msg.yourMessages")}
                 </h2>
                 <p className="text-sm text-ig-muted max-w-[280px]">
                   Send private photos and messages to a friend or group.
                 </p>
                 <button className="px-4 py-2 bg-[#0095f6] text-white text-sm font-semibold rounded-lg hover:bg-[#1877f2] transition-colors">
-                  Send message
+                  {t("msg.sendMessage")}
                 </button>
               </div>
             )}
@@ -241,6 +256,7 @@ const page = () => {
   );
 };
 function ChatPanel({ conv, messages, user, setMessages, onBack }: any) {
+  const { t } = useI18n();
   const participant = conv.participants.find((p: any) => p._id !== user._id);
   const [rewriting, setrewriting] = useState(false);
   const [input, setInput] = useState("");
@@ -309,11 +325,11 @@ function ChatPanel({ conv, messages, user, setMessages, onBack }: any) {
     try {
       setInput("");
 
-      await axiosInstance.post(`/api/conversation/${conv._id}/message`, {
+      const res = await axiosInstance.post(`/api/conversation/${conv._id}/message`, {
         text: input,
       });
-
-      // Socket will append it automatically
+      const m = res.data?.message;
+      if (m) setMessages((prev: any[]) => (prev.some((x) => x._id === m._id) ? prev : [...prev, m]));
     } catch (err) {
       console.log(err);
     }
@@ -361,7 +377,7 @@ function ChatPanel({ conv, messages, user, setMessages, onBack }: any) {
               <p className="text-sm font-semibold text-ig-text leading-tight">
                 {participant.username}
               </p>
-              <p className="text-xs text-green-500">Active now</p>
+              <p className="text-xs text-green-500">{t("msg.activeNow")}</p>
             </div>
           </Link>
         </div>
@@ -493,14 +509,14 @@ function ChatPanel({ conv, messages, user, setMessages, onBack }: any) {
             </div>
           )}
         </div>
-        <div className="flex-1 flex items-center bg-ig-hover rounded-full px-4 py-2 gap-2">
+        <div className="flex-1 min-w-0 flex items-center bg-ig-hover rounded-full px-4 py-2 gap-2">
           <input
             type="text"
             value={input}
             onChange={(e) => {
               setInput(e.target.value);
 
-              socket.emit("typing", {
+              rtEmit("typing", {
                 conversationId: conv._id,
                 userId: user._id,
               });
@@ -510,7 +526,7 @@ function ChatPanel({ conv, messages, user, setMessages, onBack }: any) {
               }
 
               typingRef.current = setTimeout(() => {
-                socket.emit("stop-typing", {
+                rtEmit("stop-typing", {
                   conversationId: conv._id,
                   userId: user._id,
                 });
@@ -518,8 +534,8 @@ function ChatPanel({ conv, messages, user, setMessages, onBack }: any) {
             }}
             onKeyDown={handleKeyDown}
             disabled={rewriting}
-            placeholder={rewriting ? "AI is rewriting..." : "Message..."}
-            className="flex-1 bg-transparent text-sm text-ig-text placeholder:text-ig-muted outline-none"
+            placeholder={rewriting ? t("msg.rewriting") : t("msg.placeholder")}
+            className="flex-1 min-w-0 w-0 bg-transparent text-sm text-ig-text placeholder:text-ig-muted outline-none"
           />
           {input.trim() ? (
             <button
@@ -585,6 +601,12 @@ function MessageBubble({
             setReaction("❤️");
           }}
         >
+          {msg.storyReply && msg.media && (
+            <span className="block text-[11px] opacity-80 mb-1">
+              <img src={msg.media} alt="" className="w-16 h-24 object-cover rounded mb-1" />
+              ↩ story
+            </span>
+          )}
           {msg.text}
         </div>
 

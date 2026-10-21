@@ -15,6 +15,8 @@ const messageSchema = new mongoose.Schema(
       required: true,
     },
 
+    media: { type: String, default: "" },
+    storyReply: { type: mongoose.Schema.Types.ObjectId, ref: "Story", default: null },
     text: {
       type: String,
       trim: true,
