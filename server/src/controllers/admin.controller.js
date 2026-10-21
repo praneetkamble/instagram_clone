@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import User from "../models/User.model.js";
 import Post from "../models/Post.model.js";
+import Like from "../models/Like.model.js";
 import { Story, StoryView } from "../models/Story.model.js";
 import { Comment, Report, Subscription } from "../models/Misc.model.js";
 import { AuditLog, LoginHistory } from "../models/Security.model.js";
@@ -177,5 +178,7 @@ export const stats = async (req, res) => {
     User.aggregate([{ $group: { _id: "$plan", count: { $sum: 1 } } }]),
     StoryView.estimatedDocumentCount(), LoginHistory.countDocuments({ status: { $in: ["failed", "denied", "locked"] }, createdAt: { $gte: weekAgo } }),
   ]);
-  res.json({ success: true, stats: { users, activeUsers, newUsers, suspended, posts, scheduled, failedScheduled: failed, stories, activeStories, comments, openReports, activeSubscriptions: subsActive, revenue: revenue[0]?.total || 0, planDistribution: Object.fromEntries(planDist.map((p) => [p._id, p.count])), storyViews, failedLogins7d: failedLogins } });
+  const [likes, reportedTotal] = await Promise.all([Like.estimatedDocumentCount(), Report.countDocuments()]);
+  const engagementPerPost = posts ? Math.round(((likes + comments) / posts) * 10) / 10 : 0;
+  res.json({ success: true, stats: { likes, reportedTotal, engagementPerPost, users, activeUsers, newUsers, suspended, posts, scheduled, failedScheduled: failed, stories, activeStories, comments, openReports, activeSubscriptions: subsActive, revenue: revenue[0]?.total || 0, planDistribution: Object.fromEntries(planDist.map((p) => [p._id, p.count])), storyViews, failedLogins7d: failedLogins } });
 };

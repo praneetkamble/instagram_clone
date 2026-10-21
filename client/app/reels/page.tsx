@@ -6,9 +6,11 @@ import Sidebar from "@/components/insta/Sidebar";
 import MobileNav from "@/components/insta/MobileNav";
 import axiosInstance from "@/lib/axios";
 import useAuthStore from "@/store/authStore";
+import { useI18n } from "@/lib/i18n";
 import { useAllPosts } from "@/components/insta/ExploreGrid";
 
 function Reel({ p, muted, setMuted }: any) {
+  const { t } = useI18n();
   const me: any = useAuthStore((s: any) => s.user);
   const ref = useRef<HTMLDivElement>(null);
   const vid = useRef<HTMLVideoElement>(null);
@@ -45,7 +47,7 @@ function Reel({ p, muted, setMuted }: any) {
           <Link href={`/profile/${p.user?.username}`} className="flex items-center gap-2 mb-2">
             <img src={p.user?.profilePicture} alt="" className="w-9 h-9 rounded-full object-cover ring-2 ring-white/80" />
             <span className="font-semibold text-sm">{p.user?.username}</span>
-            <span className="text-xs border border-white/70 rounded-lg px-2 py-0.5">View</span>
+            <span className="text-xs border border-white/70 rounded-lg px-2 py-0.5">{t("reels.view")}</span>
           </Link>
           <p className="text-sm leading-snug line-clamp-2">{p.caption}</p>
           {p.location && <p className="text-xs opacity-80 mt-1">📍 {p.location}</p>}
@@ -56,6 +58,7 @@ function Reel({ p, muted, setMuted }: any) {
 }
 
 export default function ReelsPage() {
+  const { t } = useI18n();
   const recent = useAllPosts(30);
   const [videos, setVideos] = useState<any[] | null>(null);
   useEffect(() => { axiosInstance.get("/api/posts?type=video&limit=30").then((r) => setVideos(r.data.posts || [])).catch(() => setVideos([])); }, []);
@@ -66,10 +69,10 @@ export default function ReelsPage() {
     <div className="bg-ig-bg md:bg-ig-bg min-h-screen">
       <Sidebar />
       <div className="md:ml-[72px] xl:ml-[244px]">
-        <div className="md:hidden fixed top-0 inset-x-0 z-40 h-[56px] flex items-center px-4 text-white font-bold text-lg bg-gradient-to-b from-black/60 to-transparent"><Film size={20} className="mr-2" />Reels</div>
+        <div className="md:hidden fixed top-0 inset-x-0 z-40 h-[56px] flex items-center px-4 text-white font-bold text-lg bg-gradient-to-b from-black/60 to-transparent"><Film size={20} className="mr-2" />{t("nav.reels")}</div>
         <main className="h-[calc(100dvh-50px)] md:h-[100dvh] overflow-y-scroll snap-y snap-mandatory no-scrollbar bg-black md:bg-transparent">
-          {!reels && <div className="h-full flex items-center justify-center text-ig-muted">Loading reels…</div>}
-          {reels && !reels.length && <div className="h-full flex items-center justify-center text-ig-muted">No reels yet</div>}
+          {!reels && <div className="h-full flex items-center justify-center text-ig-muted">{t("reels.loading")}</div>}
+          {reels && !reels.length && <div className="h-full flex items-center justify-center text-ig-muted">{t("reels.empty")}</div>}
           {reels?.map((p) => <Reel key={p._id} p={p} muted={muted} setMuted={setMuted} />)}
         </main>
       </div>

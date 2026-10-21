@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { Users, UserCheck, Image as ImageIcon, CalendarClock, CircleDashed, MessageCircle, Flag, Crown, IndianRupee, ShieldAlert } from "lucide-react";
+import { Users, UserCheck, Image as ImageIcon, CalendarClock, CircleDashed, MessageCircle, Flag, Crown, IndianRupee, ShieldAlert, Heart, TrendingUp } from "lucide-react";
 import { HBars, Donut } from "@/components/insta/Charts";
 import PageShell, { Card, StatCard, Skeleton, inputCls, btnCls, btn2Cls } from "@/components/insta/PageShell";
 import axiosInstance from "@/lib/axios";
@@ -88,8 +88,8 @@ function Overview() {
   const [s, setS] = useState<any>(null);
   useEffect(() => { axiosInstance.get("/api/admin/stats").then((r) => setS(r.data.stats)).catch(() => {}); }, []);
   if (!s) return <div className="grid grid-cols-2 md:grid-cols-5 gap-3">{Array.from({ length: 10 }).map((_, i) => <Skeleton key={i} className="h-24" />)}</div>;
-  const I = [Users, UserCheck, ImageIcon, CalendarClock, CircleDashed, MessageCircle, Flag, Crown, IndianRupee, ShieldAlert];
-  const items: [string, any][] = [[t("admin.users"), s.users], [t("admin.activeUsers"), s.activeUsers], [t("admin.posts"), s.posts], [t("admin.scheduled"), s.scheduled], [t("admin.activeStories"), s.activeStories], [t("admin.comments"), s.comments], [t("admin.openReports"), s.openReports], [t("admin.activeSubs"), s.activeSubscriptions], [t("admin.revenue"), `₹${s.revenue}`], [t("admin.failedLogins"), s.failedLogins7d]];
+  const I = [Users, UserCheck, ImageIcon, CalendarClock, CircleDashed, MessageCircle, Flag, Crown, IndianRupee, ShieldAlert, Heart, TrendingUp, Flag];
+  const items: [string, any][] = [[t("admin.users"), s.users], [t("admin.activeUsers"), s.activeUsers], [t("admin.posts"), s.posts], [t("admin.scheduled"), s.scheduled], [t("admin.activeStories"), s.activeStories], [t("admin.comments"), s.comments], [t("admin.openReports"), s.openReports], [t("admin.activeSubs"), s.activeSubscriptions], [t("admin.revenue"), `₹${s.revenue}`], [t("admin.failedLogins"), s.failedLogins7d], [t("admin.likes"), s.likes ?? 0], [t("admin.engagement"), s.engagementPerPost ?? 0], [t("admin.reportedContent"), s.reportedTotal ?? 0]];
   const dist = Object.entries(s.planDistribution || {}).map(([k, v]) => ({ label: tv(t, k), value: Number(v) }));
   const totalU = Math.max(1, s.users), paid = dist.filter((d) => !/free|gratis|grátis|免费|gratuit|मुफ़्त/i.test(d.label)).reduce((a, d) => a + d.value, 0);
   return (

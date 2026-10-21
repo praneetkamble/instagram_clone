@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import axiosInstance from "@/lib/axios";
 import useAuthStore from "@/store/authStore";
+import { useI18n } from "@/lib/i18n";
 
 const Verified = () => (
   <svg width="10" height="10" viewBox="0 0 24 24" className="text-[#0095f6] fill-current shrink-0">
@@ -13,6 +14,7 @@ const Verified = () => (
 );
 
 const RightSidebar = () => {
+  const { t } = useI18n();
   const me: any = useAuthStore((s: any) => s.user);
   const [users, setUsers] = useState<any[] | null>(null);
   const [followed, setFollowed] = useState<Record<string, boolean>>({});
@@ -44,14 +46,14 @@ const RightSidebar = () => {
           <Link href="/profile" className="flex items-center gap-1 text-sm font-semibold text-ig-text hover:opacity-70 truncate">{me?.username}{me?.isVerified && <Verified />}</Link>
           <p className="text-sm text-ig-muted truncate">{me?.fullName}</p>
         </div>
-        <Link href="/login" className="text-xs font-semibold text-[#0095f6] hover:text-[#1877f2] transition-colors shrink-0">Switch</Link>
+        <Link href="/login" className="text-xs font-semibold text-[#0095f6] hover:text-[#1877f2] transition-colors shrink-0">{t("suggest.switch")}</Link>
       </div>
 
       <div className="flex items-center justify-between mb-3 px-1">
-        <p className="text-sm font-semibold text-ig-muted">Suggested for you</p>
+        <p className="text-sm font-semibold text-ig-muted">{t("suggest.title")}</p>
         <div className="flex items-center gap-3">
           <button onClick={load} aria-label="refresh suggestions" className="text-ig-muted hover:text-ig-text transition-colors"><RefreshCw size={13} /></button>
-          <Link href="/search" className="text-xs font-semibold text-ig-text hover:opacity-70">See All</Link>
+          <Link href="/search" className="text-xs font-semibold text-ig-text hover:opacity-70">{t("suggest.seeAll")}</Link>
         </div>
       </div>
 
@@ -59,7 +61,7 @@ const RightSidebar = () => {
         {!users && Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="flex items-center gap-3 px-1"><div className="ig-skeleton w-8 h-8 rounded-full" /><div className="flex-1 space-y-1.5"><div className="ig-skeleton h-2.5 w-24 rounded" /><div className="ig-skeleton h-2 w-32 rounded" /></div></div>
         ))}
-        {users && !users.length && <p className="text-xs text-ig-muted px-1">You&apos;re following everyone — nice! 🎉</p>}
+        {users && !users.length && <p className="text-xs text-ig-muted px-1">{t("suggest.allFollowed")}</p>}
         {users?.map((u) => (
           <div key={u._id} className="flex items-center gap-3 px-1 ig-fade-in">
             <Link href={`/profile/${u.username}`}>
@@ -72,13 +74,13 @@ const RightSidebar = () => {
               </div>
               <p className="text-xs text-ig-muted truncate">
                 {u.mutualCount > 0
-                  ? `Followed by ${u.mutualVia}${u.mutualCount > 1 ? ` + ${u.mutualCount - 1} more` : ""}`
-                  : `${u.followersCount || 0} followers · Popular`}
+                  ? (u.mutualCount > 1 ? t("suggest.followedByMore", { username: u.mutualVia, count: u.mutualCount - 1 }) : t("suggest.followedBy", { username: u.mutualVia }))
+                  : t("suggest.popular", { count: u.followersCount || 0 })}
               </p>
             </div>
             <button onClick={() => toggleFollow(u._id)} disabled={busy[u._id]}
               className={`text-xs font-semibold transition-colors shrink-0 disabled:opacity-50 ${followed[u._id] ? "text-ig-text hover:opacity-70" : "text-[#0095f6] hover:text-[#1877f2] dark:text-[#38b6ff] dark:hover:text-[#5cc8ff]"}`}>
-              {followed[u._id] ? "Following" : "Follow"}
+              {followed[u._id] ? t("suggest.following") : t("suggest.follow")}
             </button>
           </div>
         ))}

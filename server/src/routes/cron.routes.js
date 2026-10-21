@@ -17,4 +17,13 @@ export const secretGuard = (envName) => (req, res, next) => {
 const r = express.Router();
 r.all("/tick", secretGuard("CRON_SECRET"), async (_req, res) => res.json({ success: true, ranAt: new Date().toISOString(), ...(await runAll()) }));
 r.get("/log", secretGuard("CRON_SECRET"), (_req, res) => res.json({ success: true, log: maintenanceLog() }));
+// SMTP smoke test. Only ever mails the configured sender mailbox (no arbitrary recipients). Never echoes credentials.
+r.all("/test-email", secretGuard("CRON_SECRET"), async (_req, res) => {
+  const { sendEmail } = await import("../services/mailer.js");
+  const to = process.env.SMTP_USER;
+  if (!to) return res.json({ success: false, configured: false });
+  const t = Date.now();
+  const out = await sendEmail({ to, subject: "InstAI SMTP test ✔", text: `SMTP test from ${process.env.VERCEL ? "Vercel" : "local"} at ${new Date().toISOString()}` });
+  res.json({ success: !!out.sent, configured: true, host: process.env.SMTP_HOST, port: Number(process.env.SMTP_PORT || 587), result: out.sent ? "sent" : out.dev ? "dev-log-only" : "error", error: out.error || null, ms: Date.now() - t });
+});
 export default r;

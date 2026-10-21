@@ -7,8 +7,8 @@ export default function ExplorePage() {
   const { t } = useI18n();
   const posts = useAllPosts(60);
   return (
-    <PageShell title={t("nav.explore")} subtitle="Discover posts from creators across InstAI" wide>
-      {posts && !posts.length ? <EmptyState icon={<Compass size={26} />} title="Nothing to explore yet" text="Posts from the community will appear here." /> : <ExploreGrid posts={posts} />}
+    <PageShell title={t("nav.explore")} subtitle={t("explore.subtitle")} wide>
+      {posts && !posts.length ? <EmptyState icon={<Compass size={26} />} title={t("explore.empty")} text={t("explore.emptyText")} /> : <ExploreGrid posts={posts} />}
     </PageShell>
   );
 }

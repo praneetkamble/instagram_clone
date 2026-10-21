@@ -26,13 +26,13 @@ export default function SearchPage() {
     <PageShell title={t("nav.search")} wide>
       <div className="relative mb-5">
         <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-ig-muted" />
-        <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search people, captions, #tags, places" className="ig-input !pl-11 !pr-10 !py-3 !rounded-2xl w-full" />
+        <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("search.placeholder")} className="ig-input !pl-11 !pr-10 !py-3 !rounded-2xl w-full" />
         {q && <button aria-label="clear" onClick={() => setQ("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-ig-muted"><X size={18} /></button>}
       </div>
       <Card className="mb-6">
-        <h2 className="text-sm font-semibold text-ig-text mb-3">{ql ? "People" : "Suggested people"}</h2>
-        {loading && !users.length && <p className="text-sm text-ig-muted">Searching…</p>}
-        {!loading && !users.length && <p className="text-sm text-ig-muted">No accounts found for “{q}”.</p>}
+        <h2 className="text-sm font-semibold text-ig-text mb-3">{ql ? t("search.people") : t("search.suggestedPeople")}</h2>
+        {loading && !users.length && <p className="text-sm text-ig-muted">{t("search.searching")}</p>}
+        {!loading && !users.length && <p className="text-sm text-ig-muted">{t("search.noAccounts", { q })}</p>}
         <div className="flex md:grid md:grid-cols-2 lg:grid-cols-3 gap-3 overflow-x-auto md:overflow-visible -mx-1 px-1 pb-1">
           {users.map((u) => (
             <Link key={u._id} href={`/profile/${u.username}`} className="shrink-0 w-[150px] md:w-auto flex flex-col md:flex-row items-center gap-3 p-3 rounded-xl hover:bg-ig-hover transition-colors text-center md:text-left">
@@ -45,8 +45,8 @@ export default function SearchPage() {
           ))}
         </div>
       </Card>
-      <h2 className="text-sm font-semibold text-ig-text mb-3">{ql ? `Posts matching “${q}”` : t("nav.explore")}</h2>
-      {matched && !matched.length ? <p className="text-sm text-ig-muted">No posts match.</p> : <ExploreGrid posts={matched} />}
+      <h2 className="text-sm font-semibold text-ig-text mb-3">{ql ? t("search.postsMatching", { q }) : t("nav.explore")}</h2>
+      {matched && !matched.length ? <p className="text-sm text-ig-muted">{t("search.noPosts")}</p> : <ExploreGrid posts={matched} />}
     </PageShell>
   );
 }
