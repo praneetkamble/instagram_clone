@@ -13,10 +13,21 @@ const getTransport = () => {
   }
   return transporter;
 };
+// Fake domains used by seed/demo data (override with UNDELIVERABLE_EMAIL_DOMAINS, comma separated).
+const FAKE_DOMAINS = (process.env.UNDELIVERABLE_EMAIL_DOMAINS || "instai.dev,demo.instai.dev,big.instai.dev,example.com,example.org,test.com,localhost").split(",").map((d) => d.trim().toLowerCase()).filter(Boolean);
+export const isUndeliverable = (to = "") => {
+  const dom = String(to).split("@")[1]?.toLowerCase().trim() || "";
+  return !dom || FAKE_DOMAINS.some((d) => dom === d || dom.endsWith("." + d));
+};
 export const outbox = []; // last messages, useful in dev/tests
 export async function sendEmail({ to, subject, text, html }) {
   const entry = { channel: "email", to, subject, text, at: new Date() };
   outbox.push(entry); if (outbox.length > 200) outbox.shift();
+  // Seeded/demo mailboxes don't exist: never hand them to SMTP (Gmail would bounce back to the sender).
+  if (isUndeliverable(to)) {
+    console.log(`📧 [SKIPPED undeliverable demo address] to=${to} subject=${subject}\n   ${text.replace(/\n/g, "\n   ")}`);
+    return { skipped: true, reason: "demo_address" };
+  }
   const t = getTransport();
   if (!t) {
     console.log(`\n📧 [DEV EMAIL] to=${to}\n   subject: ${subject}\n   ${text.replace(/\n/g, "\n   ")}\n`);
